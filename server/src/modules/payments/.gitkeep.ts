@@ -1,0 +1,2 @@
+// Payments module — placeholder
+export {};

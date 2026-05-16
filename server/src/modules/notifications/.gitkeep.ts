@@ -1,0 +1,2 @@
+// Notifications module — placeholder
+export {};

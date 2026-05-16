@@ -1,0 +1,2 @@
+// Common exceptions — placeholder
+export {};

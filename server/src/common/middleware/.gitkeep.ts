@@ -1,0 +1,2 @@
+// Common middleware — placeholder
+export {};
