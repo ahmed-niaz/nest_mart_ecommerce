@@ -15,9 +15,9 @@ let GoogleStrategy = class GoogleStrategy extends PassportStrategy(Strategy, 'go
     configService;
     constructor(configService) {
         super({
-            clientID: configService.get('GOOGLE_CLIENT_ID'),
-            clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
-            callbackURL: configService.get('GOOGLE_CALLBACK_URL'),
+            clientID: configService.get('GOOGLE_CLIENT_ID') || '',
+            clientSecret: configService.get('GOOGLE_CLIENT_SECRET') || '',
+            callbackURL: configService.get('GOOGLE_CALLBACK_URL') || '',
             scope: ['email', 'profile'],
         });
         this.configService = configService;

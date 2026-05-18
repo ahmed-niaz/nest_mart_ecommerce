@@ -13,11 +13,11 @@ export declare class AuthService {
         accessToken: string;
         refreshToken: string;
         user: {
-            id: string;
             email: string;
-            phone: string | null;
             firstName: string | null;
             lastName: string | null;
+            phone: string | null;
+            id: string;
             avatar: string | null;
             role: import("generated/prisma/index.js").$Enums.Role;
             isVerified: boolean;
@@ -43,16 +43,34 @@ export declare class AuthService {
         refreshToken: string;
     }>;
     getProfile(userId: string): Promise<{
-        id: string;
         email: string;
-        phone: string | null;
         firstName: string | null;
         lastName: string | null;
+        phone: string | null;
+        id: string;
         avatar: string | null;
         role: import("generated/prisma/index.js").$Enums.Role;
         isVerified: boolean;
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    googleLogin(credential: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: {
+            id: string;
+            email: string;
+            firstName: string | null;
+            lastName: string | null;
+            phone: string | null;
+            avatar: string | null;
+            role: import("generated/prisma/index.js").$Enums.Role;
+            isVerified: boolean;
+        };
+    }>;
+    googleRedirectLogin(profile: any): Promise<{
+        accessToken: string;
+        refreshToken: string;
     }>;
     private generateTokens;
 }

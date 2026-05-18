@@ -10,10 +10,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Get, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '../../../generated/prisma/index.js';
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -24,6 +27,12 @@ let UsersController = class UsersController {
     }
     async updateMyProfile(userId, dto) {
         return this.usersService.updateProfile(userId, dto);
+    }
+    async findAll() {
+        return this.usersService.findAll();
+    }
+    async updateRole(userId, role) {
+        return this.usersService.updateRole(userId, role);
     }
 };
 __decorate([
@@ -41,6 +50,24 @@ __decorate([
     __metadata("design:paramtypes", [String, UpdateUserDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateMyProfile", null);
+__decorate([
+    Get(),
+    UseGuards(RolesGuard),
+    Roles(Role.ADMIN, Role.SUPER_ADMIN),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "findAll", null);
+__decorate([
+    Patch(':id/role'),
+    UseGuards(RolesGuard),
+    Roles(Role.SUPER_ADMIN),
+    __param(0, Param('id')),
+    __param(1, Body('role')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "updateRole", null);
 UsersController = __decorate([
     Controller('users'),
     __metadata("design:paramtypes", [UsersService])

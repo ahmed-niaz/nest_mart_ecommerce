@@ -8,8 +8,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
-  // Global prefix for all routes: /api/v1/...
-  app.setGlobalPrefix('api/v1');
+  // Global prefix for all routes: /api/v1/... (excluding root '/')
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['/'],
+  });
 
   // Enable CORS for frontend
   app.enableCors({

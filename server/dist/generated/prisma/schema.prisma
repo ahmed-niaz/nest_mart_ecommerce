@@ -37,3 +37,73 @@ enum Role {
   ADMIN
   SUPER_ADMIN
 }
+
+// ==========================================
+// Product Models
+// ==========================================
+
+model Product {
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  price          Decimal  @db.Decimal(10, 2)
+  compareAtPrice Decimal? @map("compare_at_price") @db.Decimal(10, 2)
+  costPerItem    Decimal? @map("cost_per_item") @db.Decimal(10, 2)
+  sku            String?  @unique
+  barcode        String?  @unique
+
+  // Stock
+  quantity Int @default(0)
+
+  // Organization
+  collectionName String?  @map("collection_name")
+  vendorName     String?  @map("vendor_name")
+  category       String?
+  themeTemplate  String?  @map("theme_template")
+  tags           String[]
+
+  // Collections (Many-to-Many)
+  collections Collection[] @relation("ProductCollections")
+
+  // Media (array of image URLs)
+  images String[]
+
+  // Variants (stored as JSON for flexibility)
+  variants Json? @default("[]")
+
+  // Status
+  status ProductStatus @default(DRAFT)
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+enum ProductStatus {
+  ACTIVE
+  ARCHIVED
+  DRAFT
+}
+
+// ==========================================
+// Collection Models
+// ==========================================
+
+model Collection {
+  id            String  @id @default(uuid())
+  title         String  @unique
+  description   String?
+  image         String?
+  themeTemplate String? @map("theme_template")
+
+  // Products (Many-to-Many)
+  products Product[] @relation("ProductCollections")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("collections")
+}

@@ -6,7 +6,9 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const logger = new Logger('Bootstrap');
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api/v1', {
+        exclude: ['/'],
+    });
     app.enableCors({
         origin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
         credentials: true,

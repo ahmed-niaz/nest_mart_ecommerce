@@ -10,9 +10,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus, } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus, Req, Res, } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
-import { RegisterDto, LoginDto } from './dto/index.js';
+import { RegisterDto, LoginDto, GoogleLoginDto } from './dto/index.js';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -26,6 +27,22 @@ let AuthController = class AuthController {
     }
     async login(dto) {
         return this.authService.login(dto);
+    }
+    async googleLogin(dto) {
+        return this.authService.googleLogin(dto.credential);
+    }
+    async googleAuth(req) {
+    }
+    async googleAuthCallback(req, res) {
+        try {
+            const tokens = await this.authService.googleRedirectLogin(req.user);
+            const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
+            return res.redirect(`${clientUrl}/login?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
+        }
+        catch (err) {
+            const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
+            return res.redirect(`${clientUrl}/login?error=Google authentication failed`);
+        }
     }
     async refreshTokens(userId) {
         return this.authService.refreshTokens(userId);
@@ -51,6 +68,34 @@ __decorate([
     __metadata("design:paramtypes", [LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    Public(),
+    Post('google'),
+    HttpCode(HttpStatus.OK),
+    __param(0, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [GoogleLoginDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleLogin", null);
+__decorate([
+    Public(),
+    Get('google'),
+    UseGuards(AuthGuard('google')),
+    __param(0, Req()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleAuth", null);
+__decorate([
+    Public(),
+    Get('google/callback'),
+    UseGuards(AuthGuard('google')),
+    __param(0, Req()),
+    __param(1, Res()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "googleAuthCallback", null);
 __decorate([
     Public(),
     UseGuards(JwtRefreshGuard),

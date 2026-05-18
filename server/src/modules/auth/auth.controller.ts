@@ -6,9 +6,12 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
+  Res,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
-import { RegisterDto, LoginDto } from './dto/index.js';
+import { RegisterDto, LoginDto, GoogleLoginDto } from './dto/index.js';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -39,6 +42,50 @@ export class AuthController {
   }
 
   /**
+   * POST /auth/google
+   * Login/Register with Google token (ID Token or Access Token)
+   */
+  @Public()
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto.credential);
+  }
+
+  /**
+   * GET /auth/google
+   * Redirect user to Google OAuth screen
+   */
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req: any) {
+    // Passport will handle redirect
+  }
+
+  /**
+   * GET /auth/google/callback
+   * Callback URL for Google OAuth redirect flow
+   */
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(@Req() req: any, @Res() res: any) {
+    try {
+      const tokens = await this.authService.googleRedirectLogin(req.user);
+      const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
+      return res.redirect(
+        `${clientUrl}/login?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
+      );
+    } catch (err) {
+      const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
+      return res.redirect(
+        `${clientUrl}/login?error=Google authentication failed`,
+      );
+    }
+  }
+
+  /**
    * POST /auth/refresh
    * Refresh access token using refresh token
    */
@@ -59,3 +106,4 @@ export class AuthController {
     return this.authService.getProfile(userId);
   }
 }
+

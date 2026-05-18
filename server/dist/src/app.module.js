@@ -7,10 +7,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
+import { UploadModule } from './modules/upload/upload.module.js';
+import { CollectionsModule } from './modules/collections/collections.module.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 let AppModule = class AppModule {
 };
@@ -24,7 +28,11 @@ AppModule = __decorate([
             DatabaseModule,
             AuthModule,
             UsersModule,
+            ProductsModule,
+            UploadModule,
+            CollectionsModule,
         ],
+        controllers: [AppController],
         providers: [
             {
                 provide: APP_GUARD,

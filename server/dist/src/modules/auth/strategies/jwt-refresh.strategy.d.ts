@@ -9,8 +9,8 @@ export declare class JwtRefreshStrategy extends JwtRefreshStrategy_base {
     private readonly prisma;
     constructor(configService: ConfigService, prisma: PrismaService);
     validate(payload: JwtPayload): Promise<{
-        id: string;
         email: string;
+        id: string;
         role: import("generated/prisma/index.js").$Enums.Role;
         isActive: boolean;
     }>;

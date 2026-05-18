@@ -199,6 +199,205 @@ export class AuthService {
   }
 
   /**
+   * Login or Register user using Google token (ID Token or Access Token)
+   */
+  async googleLogin(credential: string) {
+    let payload: {
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      avatar?: string;
+      googleId?: string;
+    };
+
+    try {
+      // Google ID tokens are JWTs which always start with 'eyJ'
+      if (credential.startsWith('eyJ')) {
+        const tokenInfoRes = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`,
+        );
+        if (!tokenInfoRes.ok) {
+          throw new UnauthorizedException('Invalid Google ID Token');
+        }
+        const tokenInfo = await tokenInfoRes.json();
+        payload = {
+          email: tokenInfo.email,
+          firstName: tokenInfo.given_name,
+          lastName: tokenInfo.family_name,
+          avatar: tokenInfo.picture,
+          googleId: tokenInfo.sub,
+        };
+      } else {
+        // Fallback to access_token flow (userinfo API)
+        const userInfoRes = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: { Authorization: `Bearer ${credential}` },
+          },
+        );
+        if (!userInfoRes.ok) {
+          throw new UnauthorizedException('Invalid Google Access Token');
+        }
+        const userInfo = await userInfoRes.json();
+        payload = {
+          email: userInfo.email,
+          firstName: userInfo.given_name,
+          lastName: userInfo.family_name,
+          avatar: userInfo.picture,
+          googleId: userInfo.sub,
+        };
+      }
+    } catch (error) {
+      this.logger.error('Google token verification failed', error);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Failed to verify Google token');
+    }
+
+    if (!payload.email) {
+      throw new UnauthorizedException('Google account must have an email address');
+    }
+
+    // Find or create user
+    let user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+
+    if (!user) {
+      // Generate a random secure password for social auth user
+      const randomPassword = await bcrypt.hash(
+        Math.random().toString(36).substring(2) + Date.now().toString(36),
+        this.SALT_ROUNDS,
+      );
+      user = await this.prisma.user.create({
+        data: {
+          email: payload.email,
+          password: randomPassword,
+          firstName: payload.firstName || null,
+          lastName: payload.lastName || null,
+          avatar: payload.avatar || null,
+          isVerified: true,
+        },
+      });
+      this.logger.log(`New user registered via Google: ${user.email}`);
+    } else {
+      // Update missing profile info if any
+      const updateData: Record<string, any> = {};
+      if (!user.firstName && payload.firstName) updateData.firstName = payload.firstName;
+      if (!user.lastName && payload.lastName) updateData.lastName = payload.lastName;
+      if (!user.avatar && payload.avatar) updateData.avatar = payload.avatar;
+
+      if (Object.keys(updateData).length > 0) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: updateData,
+        });
+      }
+
+      // Update last login timestamp
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
+      this.logger.log(`User logged in via Google: ${user.email}`);
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException(
+        'Your account has been deactivated. Please contact support.',
+      );
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        avatar: user.avatar,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+      ...tokens,
+    };
+  }
+
+  /**
+   * Login or Register user using redirect-based Google strategy profile
+   */
+  async googleRedirectLogin(profile: any) {
+    if (!profile || !profile.email) {
+      throw new UnauthorizedException('Google authentication failed');
+    }
+
+    let user = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+    });
+
+    if (!user) {
+      // Generate a random secure password for social auth user
+      const randomPassword = await bcrypt.hash(
+        Math.random().toString(36).substring(2) + Date.now().toString(36),
+        this.SALT_ROUNDS,
+      );
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email,
+          password: randomPassword,
+          firstName: profile.firstName || null,
+          lastName: profile.lastName || null,
+          avatar: profile.avatar || null,
+          isVerified: true,
+        },
+      });
+      this.logger.log(`New user registered via Google redirect: ${user.email}`);
+    } else {
+      // Update missing profile info if any
+      const updateData: Record<string, any> = {};
+      if (!user.firstName && profile.firstName) updateData.firstName = profile.firstName;
+      if (!user.lastName && profile.lastName) updateData.lastName = profile.lastName;
+      if (!user.avatar && profile.avatar) updateData.avatar = profile.avatar;
+
+      if (Object.keys(updateData).length > 0) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: updateData,
+        });
+      }
+
+      // Update last login timestamp
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
+      this.logger.log(`User logged in via Google redirect: ${user.email}`);
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException(
+        'Your account has been deactivated. Please contact support.',
+      );
+    }
+
+    return this.generateTokens({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+  }
+
+  /**
    * Generate access and refresh JWT tokens
    */
   private async generateTokens(payload: JwtPayload) {

@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy.js';
+import { GoogleStrategy } from './strategies/google.strategy.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard.js';
 
@@ -27,6 +28,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard.js';
     AuthService,
     JwtStrategy,
     JwtRefreshStrategy,
+    GoogleStrategy,
     JwtAuthGuard,
     JwtRefreshGuard,
   ],

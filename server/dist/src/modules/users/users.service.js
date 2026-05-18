@@ -7,12 +7,53 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, NotFoundException, ConflictException, } from '@nestjs/common';
+var UsersService_1;
+import { Injectable, NotFoundException, ConflictException, Logger, } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
-let UsersService = class UsersService {
+import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+let UsersService = UsersService_1 = class UsersService {
     prisma;
-    constructor(prisma) {
+    configService;
+    logger = new Logger(UsersService_1.name);
+    constructor(prisma, configService) {
         this.prisma = prisma;
+        this.configService = configService;
+    }
+    async onModuleInit() {
+        await this.bootstrapSuperAdmin();
+    }
+    async bootstrapSuperAdmin() {
+        try {
+            const email = this.configService.get('SUPER_ADMIN_EMAIL');
+            const password = this.configService.get('SUPER_ADMIN_PASSWORD');
+            if (!email || !password) {
+                this.logger.warn('SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set. Skipping Super Admin bootstrap.');
+                return;
+            }
+            const existingAdmin = await this.prisma.user.findFirst({
+                where: { role: 'SUPER_ADMIN' },
+            });
+            if (existingAdmin) {
+                this.logger.log('Super Admin account already exists.');
+                return;
+            }
+            const hashedPassword = await bcrypt.hash(password, 12);
+            await this.prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    firstName: 'Super',
+                    lastName: 'Admin',
+                    role: 'SUPER_ADMIN',
+                    isVerified: true,
+                },
+            });
+            this.logger.log(`Super Admin created successfully with email: ${email}`);
+        }
+        catch (error) {
+            this.logger.error('Failed to bootstrap Super Admin', error);
+        }
     }
     async findById(id) {
         const user = await this.prisma.user.findUnique({
@@ -75,10 +116,37 @@ let UsersService = class UsersService {
         });
         return updatedUser;
     }
+    async findAll() {
+        return this.prisma.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                role: true,
+                isVerified: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async updateRole(userId, role) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { role },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+            },
+        });
+    }
 };
-UsersService = __decorate([
+UsersService = UsersService_1 = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [PrismaService])
+    __metadata("design:paramtypes", [PrismaService,
+        ConfigService])
 ], UsersService);
 export { UsersService };
 //# sourceMappingURL=users.service.js.map
