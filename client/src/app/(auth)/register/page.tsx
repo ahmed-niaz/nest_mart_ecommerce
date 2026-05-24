@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
-import { loadGoogleSdk } from '@/lib/google-sdk';
+import { loadGoogleSdk, googleSdkJs } from '@/lib/google-sdk';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters').optional(),
@@ -57,19 +57,18 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    try {
-      const { googleSdkJs } = await import('@/lib/google-sdk');
-      const accessToken = await googleSdkJs();
-      await googleLogin(accessToken);
-      router.push('/');
-    } catch (err) {
-      console.error('Google login error:', err);
-      setError('Google login failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    googleSdkJs()
+      .then(async (accessToken) => {
+        await googleLogin(accessToken);
+        router.push('/');
+      })
+      .catch((err: any) => {
+        console.error('Google login error:', err);
+        setError(err?.message || 'Google login failed. Please try again.');
+        setIsGoogleLoading(false);
+      });
   };
 
   return (

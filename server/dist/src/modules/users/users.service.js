@@ -42,11 +42,15 @@ let UsersService = UsersService_1 = class UsersService {
             await this.prisma.user.create({
                 data: {
                     email,
-                    password: hashedPassword,
-                    firstName: 'Super',
-                    lastName: 'Admin',
+                    passwordHash: hashedPassword,
                     role: 'SUPER_ADMIN',
-                    isVerified: true,
+                    isActive: true,
+                    profile: {
+                        create: {
+                            firstName: 'Super',
+                            lastName: 'Admin',
+                        },
+                    },
                 },
             });
             this.logger.log(`Super Admin created successfully with email: ${email}`);
@@ -58,89 +62,83 @@ let UsersService = UsersService_1 = class UsersService {
     async findById(id) {
         const user = await this.prisma.user.findUnique({
             where: { id },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                avatar: true,
-                role: true,
-                isVerified: true,
-                createdAt: true,
-                updatedAt: true,
+            include: {
+                profile: true,
             },
         });
         if (!user) {
             throw new NotFoundException('User not found');
         }
-        return user;
+        return this.mapUser(user);
     }
     async findByEmail(email) {
         return this.prisma.user.findUnique({
             where: { email },
+            include: { profile: true },
         });
     }
     async updateProfile(userId, dto) {
         if (dto.phone) {
-            const existingPhone = await this.prisma.user.findFirst({
+            const existingPhone = await this.prisma.profile.findFirst({
                 where: {
                     phone: dto.phone,
-                    NOT: { id: userId },
+                    NOT: { userId },
                 },
             });
             if (existingPhone) {
                 throw new ConflictException('This phone number is already in use by another account');
             }
         }
-        const updatedUser = await this.prisma.user.update({
-            where: { id: userId },
-            data: {
+        await this.prisma.profile.upsert({
+            where: { userId },
+            create: {
+                userId,
                 ...(dto.firstName !== undefined && { firstName: dto.firstName }),
                 ...(dto.lastName !== undefined && { lastName: dto.lastName }),
                 ...(dto.phone !== undefined && { phone: dto.phone }),
-                ...(dto.avatar !== undefined && { avatar: dto.avatar }),
+                ...(dto.avatar !== undefined && { avatarUrl: dto.avatar }),
             },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                avatar: true,
-                role: true,
-                isVerified: true,
-                createdAt: true,
-                updatedAt: true,
+            update: {
+                ...(dto.firstName !== undefined && { firstName: dto.firstName }),
+                ...(dto.lastName !== undefined && { lastName: dto.lastName }),
+                ...(dto.phone !== undefined && { phone: dto.phone }),
+                ...(dto.avatar !== undefined && { avatarUrl: dto.avatar }),
             },
         });
-        return updatedUser;
+        return this.findById(userId);
     }
     async findAll() {
-        return this.prisma.user.findMany({
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                role: true,
-                isVerified: true,
-                createdAt: true,
+        const users = await this.prisma.user.findMany({
+            include: {
+                profile: true,
             },
             orderBy: { createdAt: 'desc' },
         });
+        return users.map((u) => this.mapUser(u));
     }
     async updateRole(userId, role) {
-        return this.prisma.user.update({
+        const user = await this.prisma.user.update({
             where: { id: userId },
             data: { role },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-            },
+            include: { profile: true },
         });
+        return this.mapUser(user);
+    }
+    mapUser(user) {
+        if (!user)
+            return null;
+        return {
+            id: user.id,
+            email: user.email,
+            firstName: user.profile?.firstName,
+            lastName: user.profile?.lastName,
+            phone: user.profile?.phone,
+            avatar: user.profile?.avatarUrl,
+            role: user.role,
+            isActive: user.isActive,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
     }
 };
 UsersService = UsersService_1 = __decorate([

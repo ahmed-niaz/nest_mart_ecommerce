@@ -1,20 +1,24 @@
 import { ProductStatus } from '../../../../generated/prisma/index.js';
+export declare class CreateProductVariantDto {
+    sku?: string;
+    price?: number;
+    stock?: number;
+}
+export declare class CreateProductImageDto {
+    url: string;
+}
 export declare class CreateProductDto {
-    title: string;
+    name?: string;
+    title?: string;
+    slug?: string;
     description?: string;
-    price: number;
-    compareAtPrice?: number;
-    costPerItem?: number;
+    status?: ProductStatus;
+    categoryId?: string;
+    collectionIds?: string[];
+    price?: number;
+    quantity?: number;
     sku?: string;
     barcode?: string;
-    quantity?: number;
-    collectionName?: string;
-    vendorName?: string;
-    category?: string;
-    themeTemplate?: string;
-    tags?: string[];
-    images?: string[];
-    collectionIds?: string[];
-    variants?: any;
-    status?: ProductStatus;
+    variants?: CreateProductVariantDto[];
+    images?: any[];
 }

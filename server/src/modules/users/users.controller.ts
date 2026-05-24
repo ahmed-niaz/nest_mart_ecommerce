@@ -49,10 +49,7 @@ export class UsersController {
   @Patch(':id/role')
   @UseGuards(RolesGuard)
   @Roles(Role.SUPER_ADMIN)
-  async updateRole(
-    @Param('id') userId: string,
-    @Body('role') role: string,
-  ) {
+  async updateRole(@Param('id') userId: string, @Body('role') role: string) {
     return this.usersService.updateRole(userId, role);
   }
 }

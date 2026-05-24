@@ -1,6 +1,3 @@
-// NestMart E-Commerce — Prisma Schema
-// Database: Supabase PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -10,100 +7,310 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==========================================
-// Auth & User Models
-// ==========================================
+// --- ENUMS ---
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
 
-model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  phone       String?   @unique
-  password    String
-  firstName   String?   @map("first_name")
-  lastName    String?   @map("last_name")
-  avatar      String?
-  role        Role      @default(CUSTOMER)
-  isVerified  Boolean   @default(false) @map("is_verified")
-  isActive    Boolean   @default(true) @map("is_active")
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
 
-  @@map("users")
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum FulfillmentStatus {
+  UNFULFILLED
+  PARTIAL
+  FULFILLED
 }
 
 enum Role {
   CUSTOMER
+  STAFF
   ADMIN
   SUPER_ADMIN
 }
 
-// ==========================================
-// Product Models
-// ==========================================
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+}
+
+// --- AUTH & USER ---
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(CUSTOMER)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+
+  profile       Profile?
+  orders        Order[]
+  wishlist      Wishlist?
+  reviews       Review[]
+  addresses     Address[]
+  auditLogs     AuditLog[]
+  inventoryLogs InventoryMovement[] // Tracks which staff adjusted stock
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Profile {
+  id        String  @id @default(uuid()) @db.Uuid
+  userId    String  @unique @db.Uuid
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatarUrl String?
+
+  @@map("profiles")
+}
+
+model Address {
+  id         String  @id @default(uuid()) @db.Uuid
+  userId     String  @db.Uuid
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDefault  Boolean @default(false)
+  fullName   String
+  phone      String
+  address    String
+  city       String
+  postalCode String
+
+  @@index([userId])
+}
+
+// --- PRODUCT SYSTEM ---
+model Category {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
 
 model Product {
-  id              String        @id @default(uuid())
-  title           String
-  description     String?
-  price           Decimal       @db.Decimal(10, 2)
-  compareAtPrice  Decimal?      @map("compare_at_price") @db.Decimal(10, 2)
-  costPerItem     Decimal?      @map("cost_per_item") @db.Decimal(10, 2)
-  sku             String?       @unique
-  barcode         String?       @unique
-  
-  // Stock
-  quantity        Int           @default(0)
-  
-  // Organization
-  collectionName  String?       @map("collection_name")
-  vendorName      String?       @map("vendor_name")
-  category        String?
-  themeTemplate   String?       @map("theme_template")
-  tags            String[]
-  
-  // Collections (Many-to-Many)
-  collections     Collection[]  @relation("ProductCollections")
-  
-  // Media (array of image URLs)
-  images          String[]
-  
-  // Variants (stored as JSON for flexibility)
-  variants        Json?         @default("[]")
-  
-  // Status
-  status          ProductStatus @default(DRAFT)
-  
-  // Timestamps
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String            @unique
+  description String?           @db.Text
+  status      ProductStatus     @default(DRAFT)
+  categoryId  String            @db.Uuid
+  category    Category          @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  images      String[]          @default([])
+  reviews     Review[]
+  analytics   ProductAnalytics? // One-to-one for fast dashboard reads
 
-  @@map("products")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
 }
 
-enum ProductStatus {
-  ACTIVE
-  ARCHIVED
-  DRAFT
+model ProductVariant {
+  id                String  @id @default(uuid()) @db.Uuid
+  sku               String  @unique
+  price             Decimal @db.Decimal(10, 2)
+  stock             Int     @default(0)
+  lowStockThreshold Int     @default(5) // Used to trigger admin alerts
+  productId         String  @db.Uuid
+  product           Product @relation(fields: [productId], references: [id])
+
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
+  movements     InventoryMovement[] // The Ledger
+
+  @@index([productId])
 }
 
-// ==========================================
-// Collection Models
-// ==========================================
+// --- INVENTORY MANAGEMENT (THE LEDGER) ---
+model InventoryMovement {
+  id        String         @id @default(uuid()) @db.Uuid
+  variantId String         @db.Uuid
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  type      MovementType
+  quantity  Int // Positive for IN/RETURN, Negative for OUT/DAMAGE
+  notes     String? // e.g., "Spoiled milk", "Restock from supplier X"
+  userId    String?        @db.Uuid // Which admin/staff made the manual adjustment
+  user      User?          @relation(fields: [userId], references: [id])
+  createdAt DateTime       @default(now())
 
-model Collection {
-  id              String        @id @default(uuid())
-  title           String        @unique
-  description     String?
-  image           String?
-  themeTemplate   String?       @map("theme_template")
-  
-  // Products (Many-to-Many)
-  products        Product[]     @relation("ProductCollections")
-  
-  // Timestamps
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  @@index([variantId])
+  @@index([type])
+}
 
-  @@map("collections")
+// --- COUPONS & DISCOUNTS ---
+model Coupon {
+  id                String       @id @default(uuid()) @db.Uuid
+  code              String       @unique
+  discountType      DiscountType
+  discountValue     Decimal      @db.Decimal(10, 2)
+  minPurchaseAmount Decimal?     @db.Decimal(10, 2)
+  maxDiscount       Decimal?     @db.Decimal(10, 2) // Cap percentage discounts
+  startDate         DateTime
+  endDate           DateTime
+  usageLimit        Int? // Null = unlimited
+  usedCount         Int          @default(0)
+  isActive          Boolean      @default(true)
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+}
+
+// --- CART & WISHLIST ---
+model Cart {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String?    @unique @db.Uuid
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String         @id @default(uuid()) @db.Uuid
+  cartId    String         @db.Uuid
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String         @db.Uuid
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  priceSnap Decimal        @db.Decimal(10, 2)
+}
+
+model Wishlist {
+  id     String         @id @default(uuid()) @db.Uuid
+  userId String         @unique @db.Uuid
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  WishlistItem[]
+}
+
+model WishlistItem {
+  id         String         @id @default(uuid()) @db.Uuid
+  wishlistId String         @db.Uuid
+  wishlist   Wishlist       @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  variantId  String         @db.Uuid
+  variant    ProductVariant @relation(fields: [variantId], references: [id])
+}
+
+// --- ORDER & PAYMENT ---
+model Order {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @db.Uuid
+  user              User              @relation(fields: [userId], references: [id])
+  status            OrderStatus       @default(PENDING)
+  paymentStatus     PaymentStatus     @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
+
+  // Financials
+  subtotal       Decimal @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  shippingFee    Decimal @default(0) @db.Decimal(10, 2)
+  total          Decimal @db.Decimal(10, 2)
+
+  couponId String? @db.Uuid
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+
+  items       OrderItem[]
+  paymentLogs PaymentLog[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String         @id @default(uuid()) @db.Uuid
+  orderId   String         @db.Uuid
+  order     Order          @relation(fields: [orderId], references: [id])
+  variantId String         @db.Uuid
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  price     Decimal        @db.Decimal(10, 2)
+}
+
+model PaymentLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id])
+  provider  String
+  txId      String?
+  amount    Decimal  @db.Decimal(10, 2)
+  status    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+// --- REVIEWS & AUDIT ---
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  rating    Int
+  comment   String?
+  productId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  target    String
+  details   Json?
+  createdAt DateTime @default(now())
+}
+
+// --- ANALYTICS ---
+model ProductAnalytics {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @unique @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id])
+  views      Int      @default(0)
+  salesCount Int      @default(0)
+  revenue    Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt  DateTime @updatedAt
+}
+
+model DailySalesStat {
+  id             String   @id @default(uuid()) @db.Uuid
+  date           DateTime @unique @db.Date // Ensures one record per day
+  totalRevenue   Decimal  @default(0) @db.Decimal(10, 2)
+  totalOrders    Int      @default(0)
+  totalDiscounts Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt      DateTime @updatedAt
+
+  @@index([date])
 }

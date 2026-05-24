@@ -59,7 +59,7 @@ export class AuthController {
   @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req: any) {
+  async googleAuth() {
     // Passport will handle redirect
   }
 
@@ -77,7 +77,7 @@ export class AuthController {
       return res.redirect(
         `${clientUrl}/login?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
       );
-    } catch (err) {
+    } catch {
       const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
       return res.redirect(
         `${clientUrl}/login?error=Google authentication failed`,
@@ -106,4 +106,3 @@ export class AuthController {
     return this.authService.getProfile(userId);
   }
 }
-

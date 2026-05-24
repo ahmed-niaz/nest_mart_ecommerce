@@ -1,34 +1,83 @@
 import {
   IsString,
   IsOptional,
-  IsNumber,
   IsArray,
   IsEnum,
+  ValidateNested,
+  IsNumber,
   Min,
 } from 'class-validator';
+import { Type, Transform, plainToInstance } from 'class-transformer';
 import { ProductStatus } from '../../../../generated/prisma/index.js';
+
+export class CreateProductVariantDto {
+  @IsString()
+  @IsOptional()
+  sku?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  price?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  stock?: number;
+}
+
+export class CreateProductImageDto {
+  @IsString()
+  url!: string;
+}
 
 export class CreateProductDto {
   @IsString()
-  title: string;
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  slug?: string;
 
   @IsString()
   @IsOptional()
   description?: string;
 
+  @IsEnum(ProductStatus)
+  @IsOptional()
+  status?: ProductStatus;
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  })
+  collectionIds?: string[];
+
+  // Flat fields for single variant creation
   @IsNumber()
   @Min(0)
-  price: number;
+  @IsOptional()
+  price?: number;
 
   @IsNumber()
   @Min(0)
   @IsOptional()
-  compareAtPrice?: number;
-
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  costPerItem?: number;
+  quantity?: number;
 
   @IsString()
   @IsOptional()
@@ -38,46 +87,32 @@ export class CreateProductDto {
   @IsOptional()
   barcode?: string;
 
-  @IsNumber()
-  @Min(0)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductVariantDto)
   @IsOptional()
-  quantity?: number;
-
-  @IsString()
-  @IsOptional()
-  collectionName?: string;
-
-  @IsString()
-  @IsOptional()
-  vendorName?: string;
-
-  @IsString()
-  @IsOptional()
-  category?: string;
-
-  @IsString()
-  @IsOptional()
-  themeTemplate?: string;
+  @Transform(({ value }) => {
+    try {
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => plainToInstance(CreateProductVariantDto, item));
+      }
+      return parsed;
+    } catch {
+      return value;
+    }
+  })
+  variants?: CreateProductVariantDto[];
 
   @IsArray()
-  @IsString({ each: true })
   @IsOptional()
-  tags?: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  images?: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  collectionIds?: string[];
-
-  @IsOptional()
-  variants?: any;
-
-  @IsEnum(ProductStatus)
-  @IsOptional()
-  status?: ProductStatus;
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  })
+  images?: any[];
 }
+

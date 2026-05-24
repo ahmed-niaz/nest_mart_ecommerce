@@ -13,15 +13,14 @@ export declare class JwtStrategy extends JwtStrategy_base {
     private readonly prisma;
     constructor(configService: ConfigService, prisma: PrismaService);
     validate(payload: JwtPayload): Promise<{
-        email: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
         id: string;
-        avatar: string | null;
+        email: string;
+        firstName: string | null | undefined;
+        lastName: string | null | undefined;
+        phone: string | null | undefined;
+        avatar: string | null | undefined;
         role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
-        isActive: boolean;
+        isActive: true;
     }>;
 }
 export {};

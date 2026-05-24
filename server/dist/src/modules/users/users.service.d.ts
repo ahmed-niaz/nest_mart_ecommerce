@@ -10,57 +10,71 @@ export declare class UsersService implements OnModuleInit {
     onModuleInit(): Promise<void>;
     private bootstrapSuperAdmin;
     findById(id: string): Promise<{
+        id: any;
+        email: any;
+        firstName: any;
+        lastName: any;
+        phone: any;
+        avatar: any;
+        role: any;
+        isActive: any;
+        createdAt: any;
+        updatedAt: any;
+    } | null>;
+    findByEmail(email: string): Promise<({
+        profile: {
+            firstName: string | null;
+            lastName: string | null;
+            phone: string | null;
+            id: string;
+            userId: string;
+            avatarUrl: string | null;
+        } | null;
+    } & {
         email: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
         id: string;
-        avatar: string | null;
+        passwordHash: string;
         role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    findByEmail(email: string): Promise<{
-        email: string;
-        password: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
-        id: string;
-        avatar: string | null;
-        role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
         isActive: boolean;
         lastLoginAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-    } | null>;
+    }) | null>;
     updateProfile(userId: string, dto: UpdateUserDto): Promise<{
-        email: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
-        id: string;
-        avatar: string | null;
-        role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    findAll(): Promise<{
-        email: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
-        id: string;
-        role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
-        createdAt: Date;
-    }[]>;
+        id: any;
+        email: any;
+        firstName: any;
+        lastName: any;
+        phone: any;
+        avatar: any;
+        role: any;
+        isActive: any;
+        createdAt: any;
+        updatedAt: any;
+    } | null>;
+    findAll(): Promise<({
+        id: any;
+        email: any;
+        firstName: any;
+        lastName: any;
+        phone: any;
+        avatar: any;
+        role: any;
+        isActive: any;
+        createdAt: any;
+        updatedAt: any;
+    } | null)[]>;
     updateRole(userId: string, role: any): Promise<{
-        email: string;
-        id: string;
-        role: import("generated/prisma/index.js").$Enums.Role;
-    }>;
+        id: any;
+        email: any;
+        firstName: any;
+        lastName: any;
+        phone: any;
+        avatar: any;
+        role: any;
+        isActive: any;
+        createdAt: any;
+        updatedAt: any;
+    } | null>;
+    private mapUser;
 }

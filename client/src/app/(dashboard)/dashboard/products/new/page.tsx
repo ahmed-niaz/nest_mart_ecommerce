@@ -37,7 +37,7 @@ export default function NewProductPage() {
   const [uploading, setUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<{ file: File; previewUrl: string }[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -66,45 +66,26 @@ export default function NewProductPage() {
     }
   });
 
-  // Handle direct upload to NestJS server which uploads to Cloudinary
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle local image selection
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setUploading(true);
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      
-      const uploadData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        uploadData.append("files", files[i]);
-      }
-
-      const res = await fetch(`${baseUrl}/uploads/images`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${Cookies.get("accessToken")}`,
-        },
-        body: uploadData,
-      });
-
-      const result = await res.json();
-      if (res.ok && Array.isArray(result)) {
-        const newUrls = result.map((img: any) => img.url);
-        setUploadedImages((prev) => [...prev, ...newUrls]);
-      } else {
-        alert(result.message || "Failed to upload images.");
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("An error occurred during file upload.");
-    } finally {
-      setUploading(false);
-    }
+    const newImages = Array.from(files).map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setUploadedImages((prev) => [...prev, ...newImages]);
   };
 
   const removeImage = (urlToRemove: string) => {
-    setUploadedImages(uploadedImages.filter((url) => url !== urlToRemove));
+    setUploadedImages(uploadedImages.filter((img) => {
+      if (img.previewUrl === urlToRemove) {
+        URL.revokeObjectURL(img.previewUrl);
+        return false;
+      }
+      return true;
+    }));
   };
 
   const addTag = () => {
@@ -123,32 +104,33 @@ export default function NewProductPage() {
     setLoading(true);
 
     try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price) || 0,
-        compareAtPrice: formData.compareAtPrice ? parseFloat(formData.compareAtPrice) : undefined,
-        costPerItem: formData.costPerItem ? parseFloat(formData.costPerItem) : undefined,
-        quantity: parseInt(formData.quantity) || 0,
-        sku: formData.sku || undefined,
-        barcode: formData.barcode || undefined,
-        vendorName: formData.vendorName || undefined,
-        category: formData.category || undefined,
-        themeTemplate: formData.themeTemplate || undefined,
-        collectionIds: formData.collectionName ? [formData.collectionName] : [],
-        tags,
-        images: uploadedImages,
-        status: formData.status,
-      };
+      const uploadData = new FormData();
+      uploadData.append("title", formData.title);
+      if (formData.description) uploadData.append("description", formData.description);
+      uploadData.append("price", (parseFloat(formData.price) || 0).toString());
+      if (formData.compareAtPrice) uploadData.append("compareAtPrice", formData.compareAtPrice);
+      if (formData.costPerItem) uploadData.append("costPerItem", formData.costPerItem);
+      uploadData.append("quantity", (parseInt(formData.quantity) || 0).toString());
+      if (formData.sku) uploadData.append("sku", formData.sku);
+      if (formData.barcode) uploadData.append("barcode", formData.barcode);
+      if (formData.vendorName) uploadData.append("vendorName", formData.vendorName);
+      if (formData.category) uploadData.append("category", formData.category);
+      if (formData.themeTemplate) uploadData.append("themeTemplate", formData.themeTemplate);
+      if (formData.collectionName) uploadData.append("collectionIds", JSON.stringify([formData.collectionName]));
+      if (tags.length > 0) uploadData.append("tags", JSON.stringify(tags));
+      uploadData.append("status", formData.status);
+
+      uploadedImages.forEach((img) => {
+        uploadData.append("images", img.file);
+      });
 
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/products`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${Cookies.get("accessToken")}`,
         },
-        body: JSON.stringify(payload),
+        body: uploadData,
       });
 
       const data = await res.json();
@@ -282,12 +264,12 @@ export default function NewProductPage() {
             
             {uploadedImages.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 pb-4">
-                {uploadedImages.map((url, idx) => (
+                {uploadedImages.map((img, idx) => (
                   <div key={idx} className="relative aspect-square bg-background rounded-xl border border-border-main overflow-hidden group shadow-sm">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <img src={img.previewUrl} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => removeImage(url)}
+                      onClick={() => removeImage(img.previewUrl)}
                       className="absolute top-1.5 right-1.5 p-1 bg-black/70 hover:bg-red-600 rounded-full text-white transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

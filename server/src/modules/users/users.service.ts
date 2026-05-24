@@ -29,7 +29,9 @@ export class UsersService implements OnModuleInit {
       const password = this.configService.get<string>('SUPER_ADMIN_PASSWORD');
 
       if (!email || !password) {
-        this.logger.warn('SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set. Skipping Super Admin bootstrap.');
+        this.logger.warn(
+          'SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set. Skipping Super Admin bootstrap.',
+        );
         return;
       }
 
@@ -47,11 +49,15 @@ export class UsersService implements OnModuleInit {
       await this.prisma.user.create({
         data: {
           email,
-          password: hashedPassword,
-          firstName: 'Super',
-          lastName: 'Admin',
+          passwordHash: hashedPassword,
           role: 'SUPER_ADMIN',
-          isVerified: true,
+          isActive: true,
+          profile: {
+            create: {
+              firstName: 'Super',
+              lastName: 'Admin',
+            },
+          },
         },
       });
 
@@ -67,17 +73,8 @@ export class UsersService implements OnModuleInit {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        profile: true,
       },
     });
 
@@ -85,7 +82,7 @@ export class UsersService implements OnModuleInit {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return this.mapUser(user);
   }
 
   /**
@@ -94,6 +91,7 @@ export class UsersService implements OnModuleInit {
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: { profile: true },
     });
   }
 
@@ -103,10 +101,10 @@ export class UsersService implements OnModuleInit {
   async updateProfile(userId: string, dto: UpdateUserDto) {
     // Check phone uniqueness if updating phone
     if (dto.phone) {
-      const existingPhone = await this.prisma.user.findFirst({
+      const existingPhone = await this.prisma.profile.findFirst({
         where: {
           phone: dto.phone,
-          NOT: { id: userId },
+          NOT: { userId },
         },
       });
 
@@ -117,61 +115,67 @@ export class UsersService implements OnModuleInit {
       }
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
+    // Upsert profile
+    await this.prisma.profile.upsert({
+      where: { userId },
+      create: {
+        userId,
         ...(dto.firstName !== undefined && { firstName: dto.firstName }),
         ...(dto.lastName !== undefined && { lastName: dto.lastName }),
         ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.avatar !== undefined && { avatar: dto.avatar }),
+        ...(dto.avatar !== undefined && { avatarUrl: dto.avatar }),
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
+      update: {
+        ...(dto.firstName !== undefined && { firstName: dto.firstName }),
+        ...(dto.lastName !== undefined && { lastName: dto.lastName }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.avatar !== undefined && { avatarUrl: dto.avatar }),
       },
     });
 
-    return updatedUser;
+    return this.findById(userId);
   }
+
   /**
    * Find all users
    */
   async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        role: true,
-        isVerified: true,
-        createdAt: true,
+    const users = await this.prisma.user.findMany({
+      include: {
+        profile: true,
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return users.map((u) => this.mapUser(u));
   }
 
   /**
    * Update user role
    */
   async updateRole(userId: string, role: any) {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { role },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-      },
+      include: { profile: true },
     });
+
+    return this.mapUser(user);
+  }
+
+  private mapUser(user: any) {
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+      phone: user.profile?.phone,
+      avatar: user.profile?.avatarUrl,
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

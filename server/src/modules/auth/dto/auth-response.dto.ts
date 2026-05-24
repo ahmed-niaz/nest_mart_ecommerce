@@ -7,7 +7,7 @@ export class AuthResponseDto {
     phone: string | null;
     avatar: string | null;
     role: string;
-    isVerified: boolean;
+    isActive: boolean;
   };
 
   accessToken!: string;

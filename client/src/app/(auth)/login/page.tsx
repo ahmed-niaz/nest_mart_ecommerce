@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
-import { loadGoogleSdk } from '@/lib/google-sdk';
+import { loadGoogleSdk, googleSdkJs } from '@/lib/google-sdk';
+import Cookies from 'js-cookie';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -42,13 +43,10 @@ export default function LoginPage() {
         setError(err);
       } else if (token && refresh) {
         setIsGoogleLoading(true);
-        import('js-cookie').then((CookiesModule) => {
-          const Cookies = CookiesModule.default;
-          Cookies.set('accessToken', token, { expires: 15 / (24 * 60), path: '/' });
-          Cookies.set('refreshToken', refresh, { expires: 7, path: '/' });
-          // Force reload to home page so that AuthProvider picks up the session cookies
-          window.location.href = '/';
-        });
+        Cookies.set('accessToken', token, { expires: 15 / (24 * 60), path: '/' });
+        Cookies.set('refreshToken', refresh, { expires: 7, path: '/' });
+        // Force reload to home page so that AuthProvider picks up the session cookies
+        window.location.href = '/';
       }
     }
   }, []);
@@ -72,19 +70,18 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    try {
-      const { googleSdkJs } = await import('@/lib/google-sdk');
-      const accessToken = await googleSdkJs();
-      await googleLogin(accessToken);
-      router.push('/');
-    } catch (err) {
-      console.error('Google login error:', err);
-      setError('Google login failed. Please try again.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    googleSdkJs()
+      .then(async (accessToken) => {
+        await googleLogin(accessToken);
+        router.push('/');
+      })
+      .catch((err: any) => {
+        console.error('Google login error:', err);
+        setError(err?.message || 'Google login failed. Please try again.');
+        setIsGoogleLoading(false);
+      });
   };
 
   return (

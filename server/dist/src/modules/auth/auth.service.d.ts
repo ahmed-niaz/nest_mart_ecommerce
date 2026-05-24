@@ -13,59 +13,57 @@ export declare class AuthService {
         accessToken: string;
         refreshToken: string;
         user: {
-            email: string;
-            firstName: string | null;
-            lastName: string | null;
-            phone: string | null;
-            id: string;
-            avatar: string | null;
-            role: import("generated/prisma/index.js").$Enums.Role;
-            isVerified: boolean;
-            createdAt: Date;
+            id: any;
+            email: any;
+            firstName: any;
+            lastName: any;
+            phone: any;
+            avatar: any;
+            role: any;
+            isActive: any;
         };
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
         refreshToken: string;
         user: {
-            id: string;
-            email: string;
-            firstName: string | null;
-            lastName: string | null;
-            phone: string | null;
-            avatar: string | null;
-            role: import("generated/prisma/index.js").$Enums.Role;
-            isVerified: boolean;
+            id: any;
+            email: any;
+            firstName: any;
+            lastName: any;
+            phone: any;
+            avatar: any;
+            role: any;
+            isActive: any;
         };
     }>;
+    private mapUser;
     refreshTokens(userId: string): Promise<{
         accessToken: string;
         refreshToken: string;
     }>;
     getProfile(userId: string): Promise<{
-        email: string;
-        firstName: string | null;
-        lastName: string | null;
-        phone: string | null;
-        id: string;
-        avatar: string | null;
-        role: import("generated/prisma/index.js").$Enums.Role;
-        isVerified: boolean;
-        createdAt: Date;
-        updatedAt: Date;
+        id: any;
+        email: any;
+        firstName: any;
+        lastName: any;
+        phone: any;
+        avatar: any;
+        role: any;
+        isActive: any;
     }>;
     googleLogin(credential: string): Promise<{
         accessToken: string;
         refreshToken: string;
         user: {
-            id: string;
-            email: string;
-            firstName: string | null;
-            lastName: string | null;
-            phone: string | null;
-            avatar: string | null;
-            role: import("generated/prisma/index.js").$Enums.Role;
-            isVerified: boolean;
+            id: any;
+            email: any;
+            firstName: any;
+            lastName: any;
+            phone: any;
+            avatar: any;
+            role: any;
+            isActive: any;
         };
     }>;
     googleRedirectLogin(profile: any): Promise<{

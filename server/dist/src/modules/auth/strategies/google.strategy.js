@@ -22,7 +22,7 @@ let GoogleStrategy = class GoogleStrategy extends PassportStrategy(Strategy, 'go
         });
         this.configService = configService;
     }
-    async validate(accessToken, refreshToken, profile, done) {
+    validate(accessToken, refreshToken, profile, done) {
         const { emails, name, photos } = profile;
         const user = {
             email: emails[0].value,

@@ -7,39 +7,101 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsString, IsOptional, IsNumber, IsArray, IsEnum, Min, } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, ValidateNested, IsNumber, Min, } from 'class-validator';
+import { Type, Transform, plainToInstance } from 'class-transformer';
 import { ProductStatus } from '../../../../generated/prisma/index.js';
-export class CreateProductDto {
-    title;
-    description;
-    price;
-    compareAtPrice;
-    costPerItem;
+export class CreateProductVariantDto {
     sku;
-    barcode;
-    quantity;
-    collectionName;
-    vendorName;
-    category;
-    themeTemplate;
-    tags;
-    images;
-    collectionIds;
-    variants;
-    status;
+    price;
+    stock;
 }
 __decorate([
     IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductVariantDto.prototype, "sku", void 0);
+__decorate([
+    IsNumber(),
+    Min(0),
+    IsOptional(),
+    __metadata("design:type", Number)
+], CreateProductVariantDto.prototype, "price", void 0);
+__decorate([
+    IsNumber(),
+    Min(0),
+    IsOptional(),
+    __metadata("design:type", Number)
+], CreateProductVariantDto.prototype, "stock", void 0);
+export class CreateProductImageDto {
+    url;
+}
+__decorate([
+    IsString(),
+    __metadata("design:type", String)
+], CreateProductImageDto.prototype, "url", void 0);
+export class CreateProductDto {
+    name;
+    title;
+    slug;
+    description;
+    status;
+    categoryId;
+    collectionIds;
+    price;
+    quantity;
+    sku;
+    barcode;
+    variants;
+    images;
+}
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "name", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "title", void 0);
 __decorate([
     IsString(),
     IsOptional(),
     __metadata("design:type", String)
+], CreateProductDto.prototype, "slug", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
 ], CreateProductDto.prototype, "description", void 0);
+__decorate([
+    IsEnum(ProductStatus),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "status", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "categoryId", void 0);
+__decorate([
+    IsArray(),
+    IsString({ each: true }),
+    IsOptional(),
+    Transform(({ value }) => {
+        try {
+            return typeof value === 'string' ? JSON.parse(value) : value;
+        }
+        catch {
+            return value;
+        }
+    }),
+    __metadata("design:type", Array)
+], CreateProductDto.prototype, "collectionIds", void 0);
 __decorate([
     IsNumber(),
     Min(0),
+    IsOptional(),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "price", void 0);
 __decorate([
@@ -47,13 +109,7 @@ __decorate([
     Min(0),
     IsOptional(),
     __metadata("design:type", Number)
-], CreateProductDto.prototype, "compareAtPrice", void 0);
-__decorate([
-    IsNumber(),
-    Min(0),
-    IsOptional(),
-    __metadata("design:type", Number)
-], CreateProductDto.prototype, "costPerItem", void 0);
+], CreateProductDto.prototype, "quantity", void 0);
 __decorate([
     IsString(),
     IsOptional(),
@@ -65,56 +121,35 @@ __decorate([
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "barcode", void 0);
 __decorate([
-    IsNumber(),
-    Min(0),
-    IsOptional(),
-    __metadata("design:type", Number)
-], CreateProductDto.prototype, "quantity", void 0);
-__decorate([
-    IsString(),
-    IsOptional(),
-    __metadata("design:type", String)
-], CreateProductDto.prototype, "collectionName", void 0);
-__decorate([
-    IsString(),
-    IsOptional(),
-    __metadata("design:type", String)
-], CreateProductDto.prototype, "vendorName", void 0);
-__decorate([
-    IsString(),
-    IsOptional(),
-    __metadata("design:type", String)
-], CreateProductDto.prototype, "category", void 0);
-__decorate([
-    IsString(),
-    IsOptional(),
-    __metadata("design:type", String)
-], CreateProductDto.prototype, "themeTemplate", void 0);
-__decorate([
     IsArray(),
-    IsString({ each: true }),
+    ValidateNested({ each: true }),
+    Type(() => CreateProductVariantDto),
     IsOptional(),
+    Transform(({ value }) => {
+        try {
+            const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+            if (Array.isArray(parsed)) {
+                return parsed.map((item) => plainToInstance(CreateProductVariantDto, item));
+            }
+            return parsed;
+        }
+        catch {
+            return value;
+        }
+    }),
     __metadata("design:type", Array)
-], CreateProductDto.prototype, "tags", void 0);
-__decorate([
-    IsArray(),
-    IsString({ each: true }),
-    IsOptional(),
-    __metadata("design:type", Array)
-], CreateProductDto.prototype, "images", void 0);
-__decorate([
-    IsArray(),
-    IsString({ each: true }),
-    IsOptional(),
-    __metadata("design:type", Array)
-], CreateProductDto.prototype, "collectionIds", void 0);
-__decorate([
-    IsOptional(),
-    __metadata("design:type", Object)
 ], CreateProductDto.prototype, "variants", void 0);
 __decorate([
-    IsEnum(ProductStatus),
+    IsArray(),
     IsOptional(),
-    __metadata("design:type", String)
-], CreateProductDto.prototype, "status", void 0);
+    Transform(({ value }) => {
+        try {
+            return typeof value === 'string' ? JSON.parse(value) : value;
+        }
+        catch {
+            return value;
+        }
+    }),
+    __metadata("design:type", Array)
+], CreateProductDto.prototype, "images", void 0);
 //# sourceMappingURL=create-product.dto.js.map

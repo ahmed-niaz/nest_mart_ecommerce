@@ -12,7 +12,9 @@ export class UploadService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+  async uploadImage(
+    file: Express.Multer.File,
+  ): Promise<{ url: string; publicId: string }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -25,7 +27,11 @@ export class UploadService {
         },
         (error, result) => {
           if (error || !result) {
-            return reject(new BadRequestException(`Cloudinary Upload Failed: ${error?.message || 'Unknown error'}`));
+            return reject(
+              new BadRequestException(
+                `Cloudinary Upload Failed: ${error?.message || 'Unknown error'}`,
+              ),
+            );
           }
           resolve({
             url: result.secure_url,
@@ -38,7 +44,9 @@ export class UploadService {
     });
   }
 
-  async uploadImages(files: Express.Multer.File[]): Promise<{ url: string; publicId: string }[]> {
+  async uploadImages(
+    files: Express.Multer.File[],
+  ): Promise<{ url: string; publicId: string }[]> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }

@@ -123,48 +123,180 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  phone: 'phone',
-  password: 'password',
-  firstName: 'firstName',
-  lastName: 'lastName',
-  avatar: 'avatar',
+  passwordHash: 'passwordHash',
   role: 'role',
-  isVerified: 'isVerified',
   isActive: 'isActive',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ProfileScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  phone: 'phone',
+  avatarUrl: 'avatarUrl'
+};
+
+exports.Prisma.AddressScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  isDefault: 'isDefault',
+  fullName: 'fullName',
+  phone: 'phone',
+  address: 'address',
+  city: 'city',
+  postalCode: 'postalCode'
+};
+
+exports.Prisma.CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.ProductScalarFieldEnum = {
   id: 'id',
-  title: 'title',
+  name: 'name',
+  slug: 'slug',
   description: 'description',
-  price: 'price',
-  compareAtPrice: 'compareAtPrice',
-  costPerItem: 'costPerItem',
-  sku: 'sku',
-  barcode: 'barcode',
-  quantity: 'quantity',
-  collectionName: 'collectionName',
-  vendorName: 'vendorName',
-  category: 'category',
-  themeTemplate: 'themeTemplate',
-  tags: 'tags',
-  images: 'images',
-  variants: 'variants',
   status: 'status',
+  categoryId: 'categoryId',
+  images: 'images',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.CollectionScalarFieldEnum = {
+exports.Prisma.ProductVariantScalarFieldEnum = {
   id: 'id',
-  title: 'title',
-  description: 'description',
-  image: 'image',
-  themeTemplate: 'themeTemplate',
+  sku: 'sku',
+  price: 'price',
+  stock: 'stock',
+  lowStockThreshold: 'lowStockThreshold',
+  productId: 'productId'
+};
+
+exports.Prisma.InventoryMovementScalarFieldEnum = {
+  id: 'id',
+  variantId: 'variantId',
+  type: 'type',
+  quantity: 'quantity',
+  notes: 'notes',
+  userId: 'userId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CouponScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  discountType: 'discountType',
+  discountValue: 'discountValue',
+  minPurchaseAmount: 'minPurchaseAmount',
+  maxDiscount: 'maxDiscount',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  usageLimit: 'usageLimit',
+  usedCount: 'usedCount',
+  isActive: 'isActive',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CartScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CartItemScalarFieldEnum = {
+  id: 'id',
+  cartId: 'cartId',
+  variantId: 'variantId',
+  quantity: 'quantity',
+  priceSnap: 'priceSnap'
+};
+
+exports.Prisma.WishlistScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId'
+};
+
+exports.Prisma.WishlistItemScalarFieldEnum = {
+  id: 'id',
+  wishlistId: 'wishlistId',
+  variantId: 'variantId'
+};
+
+exports.Prisma.OrderScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  status: 'status',
+  paymentStatus: 'paymentStatus',
+  fulfillmentStatus: 'fulfillmentStatus',
+  subtotal: 'subtotal',
+  discountAmount: 'discountAmount',
+  shippingFee: 'shippingFee',
+  total: 'total',
+  couponId: 'couponId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrderItemScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  variantId: 'variantId',
+  quantity: 'quantity',
+  price: 'price'
+};
+
+exports.Prisma.PaymentLogScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  provider: 'provider',
+  txId: 'txId',
+  amount: 'amount',
+  status: 'status',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ReviewScalarFieldEnum = {
+  id: 'id',
+  rating: 'rating',
+  comment: 'comment',
+  productId: 'productId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  action: 'action',
+  target: 'target',
+  details: 'details',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ProductAnalyticsScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  views: 'views',
+  salesCount: 'salesCount',
+  revenue: 'revenue',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DailySalesStatScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  totalRevenue: 'totalRevenue',
+  totalOrders: 'totalOrders',
+  totalDiscounts: 'totalDiscounts',
   updatedAt: 'updatedAt'
 };
 
@@ -195,20 +327,72 @@ exports.Prisma.JsonNullValueFilter = {
 };
 exports.Role = exports.$Enums.Role = {
   CUSTOMER: 'CUSTOMER',
+  STAFF: 'STAFF',
   ADMIN: 'ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN'
 };
 
 exports.ProductStatus = exports.$Enums.ProductStatus = {
+  DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',
-  ARCHIVED: 'ARCHIVED',
-  DRAFT: 'DRAFT'
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.MovementType = exports.$Enums.MovementType = {
+  IN: 'IN',
+  OUT: 'OUT',
+  ADJUSTMENT: 'ADJUSTMENT',
+  RETURN: 'RETURN',
+  DAMAGE: 'DAMAGE'
+};
+
+exports.DiscountType = exports.$Enums.DiscountType = {
+  PERCENTAGE: 'PERCENTAGE',
+  FIXED_AMOUNT: 'FIXED_AMOUNT'
+};
+
+exports.OrderStatus = exports.$Enums.OrderStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SHIPPED: 'SHIPPED',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
+  RETURNED: 'RETURNED'
+};
+
+exports.PaymentStatus = exports.$Enums.PaymentStatus = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED'
+};
+
+exports.FulfillmentStatus = exports.$Enums.FulfillmentStatus = {
+  UNFULFILLED: 'UNFULFILLED',
+  PARTIAL: 'PARTIAL',
+  FULFILLED: 'FULFILLED'
 };
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Profile: 'Profile',
+  Address: 'Address',
+  Category: 'Category',
   Product: 'Product',
-  Collection: 'Collection'
+  ProductVariant: 'ProductVariant',
+  InventoryMovement: 'InventoryMovement',
+  Coupon: 'Coupon',
+  Cart: 'Cart',
+  CartItem: 'CartItem',
+  Wishlist: 'Wishlist',
+  WishlistItem: 'WishlistItem',
+  Order: 'Order',
+  OrderItem: 'OrderItem',
+  PaymentLog: 'PaymentLog',
+  Review: 'Review',
+  AuditLog: 'AuditLog',
+  ProductAnalytics: 'ProductAnalytics',
+  DailySalesStat: 'DailySalesStat'
 };
 
 /**

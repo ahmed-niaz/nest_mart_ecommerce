@@ -31,7 +31,7 @@ let AuthController = class AuthController {
     async googleLogin(dto) {
         return this.authService.googleLogin(dto.credential);
     }
-    async googleAuth(req) {
+    async googleAuth() {
     }
     async googleAuthCallback(req, res) {
         try {
@@ -39,7 +39,7 @@ let AuthController = class AuthController {
             const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
             return res.redirect(`${clientUrl}/login?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
         }
-        catch (err) {
+        catch {
             const clientUrl = process.env['CLIENT_URL'] || 'http://localhost:3000';
             return res.redirect(`${clientUrl}/login?error=Google authentication failed`);
         }
@@ -81,9 +81,8 @@ __decorate([
     Public(),
     Get('google'),
     UseGuards(AuthGuard('google')),
-    __param(0, Req()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "googleAuth", null);
 __decorate([

@@ -4,15 +4,10 @@ import {
   UseInterceptors,
   UploadedFile,
   UploadedFiles,
-  UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service.js';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { RolesGuard } from '../../common/guards/roles.guard.js';
-import { Roles } from '../../common/decorators/roles.decorator.js';
-import { Role } from '../../../generated/prisma/index.js';
 
 @Controller('uploads')
 export class UploadController {
