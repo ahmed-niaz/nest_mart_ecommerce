@@ -11,7 +11,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles, } from '@nestjs/common';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FilesInterceptor, } from '@nestjs/platform-express';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
@@ -45,7 +45,7 @@ __decorate([
     Post(),
     UseGuards(JwtAuthGuard, RolesGuard),
     Roles(Role.ADMIN, Role.SUPER_ADMIN),
-    UseInterceptors(AnyFilesInterceptor()),
+    UseInterceptors(FilesInterceptor('images', 10)),
     __param(0, Body()),
     __param(1, UploadedFiles()),
     __metadata("design:type", Function),

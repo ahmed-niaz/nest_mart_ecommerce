@@ -95,7 +95,9 @@ export class CreateProductDto {
     try {
       const parsed = typeof value === 'string' ? JSON.parse(value) : value;
       if (Array.isArray(parsed)) {
-        return parsed.map((item) => plainToInstance(CreateProductVariantDto, item));
+        return parsed.map((item) =>
+          plainToInstance(CreateProductVariantDto, item),
+        );
       }
       return parsed;
     } catch {
@@ -115,4 +117,3 @@ export class CreateProductDto {
   })
   images?: any[];
 }
-

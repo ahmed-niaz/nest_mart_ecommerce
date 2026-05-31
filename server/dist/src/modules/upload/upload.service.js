@@ -47,6 +47,19 @@ let UploadService = class UploadService {
         const uploadPromises = files.map((file) => this.uploadImage(file));
         return Promise.all(uploadPromises);
     }
+    async deleteImage(publicId) {
+        if (!publicId) {
+            throw new BadRequestException('No publicId provided');
+        }
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.destroy(publicId, (error) => {
+                if (error) {
+                    return reject(new BadRequestException(`Cloudinary Delete Failed: ${error?.message || 'Unknown error'}`));
+                }
+                resolve();
+            });
+        });
+    }
 };
 UploadService = __decorate([
     Injectable(),

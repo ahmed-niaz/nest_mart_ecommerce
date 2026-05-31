@@ -23,20 +23,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  async function checkAuth() {
     try {
       const token = Cookies.get('accessToken');
       if (token) {
         const response = await authApi.me();
         setUser(response.data);
       }
-    } catch (error) {
+    } catch {
       Cookies.remove('accessToken', { path: '/' });
       Cookies.remove('refreshToken', { path: '/' });
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   const handleAuthResponse = (data: LoginResponse) => {
     Cookies.set('accessToken', data.data.accessToken, { expires: 15 / (24 * 60), path: '/' }); // 15 min

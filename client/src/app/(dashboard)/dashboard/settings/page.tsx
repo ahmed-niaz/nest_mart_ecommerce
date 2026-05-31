@@ -19,15 +19,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.role === "SUPER_ADMIN") {
-      fetchUsers();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/users`, {
@@ -44,7 +36,16 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (user?.role === "SUPER_ADMIN") {
+      fetchUsers();
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+    }
+  }, [user]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdating(userId);

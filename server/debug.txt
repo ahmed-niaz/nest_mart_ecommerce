@@ -1,0 +1,16 @@
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Fresh Vegetables yeap","description":"Naturally grown fresh organic bananas rich in potassium and perfect for healthy snacks.","categoryId":"be0b61d5-21e6-4bc5-99a5-58b1de486d7a"}
+FILES: []
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Fresh Vegetables yeap","description":"Naturally grown fresh organic bananas rich in potassium and perfect for healthy snacks.","categoryId":"be0b61d5-21e6-4bc5-99a5-58b1de486d7a"}
+FILES: []
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Fresh Vegetables yeap","description":"Naturally grown fresh organic bananas rich in potassium and perfect for healthy snacks.","categoryId":"be0b61d5-21e6-4bc5-99a5-58b1de486d7a"}
+FILES: []
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Fresh Vegetables yeap","description":"Naturally grown fresh organic bananas rich in potassium and perfect for healthy snacks.","categoryId":"be0b61d5-21e6-4bc5-99a5-58b1de486d7a"}
+FILES: [{"fieldname":"images","originalname":"vegetables.jpg"}]
+

@@ -22,6 +22,7 @@ import { UploadModule } from './modules/upload/upload.module.js';
 import { CouponsModule } from './modules/coupons/coupons.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
+import { ProductImagesModule } from './modules/product-images/product-images.module.js';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 let AppModule = class AppModule {
@@ -47,6 +48,7 @@ AppModule = __decorate([
             CouponsModule,
             InventoryModule,
             AnalyticsModule,
+            ProductImagesModule,
         ],
         controllers: [AppController],
         providers: [

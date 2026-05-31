@@ -10,4 +10,5 @@ export declare class UploadService {
         url: string;
         publicId: string;
     }[]>;
+    deleteImage(publicId: string): Promise<void>;
 }

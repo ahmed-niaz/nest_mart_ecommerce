@@ -66,13 +66,12 @@ export declare class ProductsController {
     }>;
     remove(id: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         name: string;
         slug: string;
         description: string | null;
         status: import("../../../generated/prisma/index.js").$Enums.ProductStatus;
         categoryId: string;
-        images: string[];
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

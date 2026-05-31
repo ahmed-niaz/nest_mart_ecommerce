@@ -107,11 +107,15 @@ model Address {
 
 // --- PRODUCT SYSTEM ---
 model Category {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String
-  slug      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
+  id              String     @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String     @unique
+  categoriesImage String?
+  parentId        String?    @db.Uuid
+  parent          Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: Cascade)
+  subCategories   Category[] @relation("SubCategories")
+  products        Product[]
+  createdAt       DateTime   @default(now())
 }
 
 model Product {
@@ -123,7 +127,7 @@ model Product {
   categoryId  String            @db.Uuid
   category    Category          @relation(fields: [categoryId], references: [id])
   variants    ProductVariant[]
-  images      String[]          @default([])
+  images      ProductImage[]
   reviews     Review[]
   analytics   ProductAnalytics? // One-to-one for fast dashboard reads
 
@@ -132,6 +136,22 @@ model Product {
 
   @@index([slug])
   @@index([categoryId])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  publicId  String
+  url       String
+  alt       String?
+  order     Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_images")
 }
 
 model ProductVariant {

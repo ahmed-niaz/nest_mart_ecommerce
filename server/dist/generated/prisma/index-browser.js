@@ -155,6 +155,8 @@ exports.Prisma.CategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
+  categoriesImage: 'categoriesImage',
+  parentId: 'parentId',
   createdAt: 'createdAt'
 };
 
@@ -165,7 +167,18 @@ exports.Prisma.ProductScalarFieldEnum = {
   description: 'description',
   status: 'status',
   categoryId: 'categoryId',
-  images: 'images',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ProductImageScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  publicId: 'publicId',
+  url: 'url',
+  alt: 'alt',
+  order: 'order',
+  isPrimary: 'isPrimary',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -379,6 +392,7 @@ exports.Prisma.ModelName = {
   Address: 'Address',
   Category: 'Category',
   Product: 'Product',
+  ProductImage: 'ProductImage',
   ProductVariant: 'ProductVariant',
   InventoryMovement: 'InventoryMovement',
   Coupon: 'Coupon',

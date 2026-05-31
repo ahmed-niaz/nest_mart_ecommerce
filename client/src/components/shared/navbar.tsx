@@ -1,26 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth-context';
+import { useQuery } from '@tanstack/react-query';
 
-const collections = [
-  'Fresh Vegetables',
-  'Fresh Fruits',
-  'Meat & Fish',
-  'Dairy & Eggs',
-  'Bakery',
-  'Beverages',
-  'Snacks',
-  'Frozen Foods',
-];
+interface Category {
+  id: string;
+  title: string;
+  slug: string;
+}
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+
+  const { data: collections = [] } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const res = await fetch(`${baseUrl}/categories`);
+      const data = await res.json();
+      return data.success ? data.data : [];
+    }
+  });
 
   return (
     <header className="sticky top-0 z-50 bg-surface border-b border-border-main shadow-sm">
@@ -137,11 +143,11 @@ export default function Navbar() {
             <nav className="flex flex-wrap gap-2">
               {collections.slice(0, 4).map((item) => (
                 <Link
-                  key={item}
-                  href={`/collections/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                  key={item.id}
+                  href={`/collections/${item.slug}`}
                   className="px-3 py-1.5 text-sm text-gray-600 bg-background rounded-full hover:bg-orange-100 hover:text-primary-hover transition-colors"
                 >
-                  {item}
+                  {item.title}
                 </Link>
               ))}
             </nav>
@@ -154,11 +160,11 @@ export default function Navbar() {
           <nav className="flex items-center gap-1 py-2 overflow-x-auto">
             {collections.map((item) => (
               <Link
-                key={item}
-                href={`/collections/${item.toLowerCase().replace(/\s+/g, '-')}`}
+                key={item.id}
+                href={`/collections/${item.slug}`}
                 className="px-4 py-1.5 text-sm text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-full whitespace-nowrap transition-all duration-200"
               >
-                {item}
+                {item.title}
               </Link>
             ))}
           </nav>

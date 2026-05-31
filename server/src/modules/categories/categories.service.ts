@@ -31,6 +31,7 @@ export class CategoriesService {
       data: {
         name,
         slug,
+        categoriesImage: dto.categoriesImage,
       },
     });
 
@@ -45,6 +46,7 @@ export class CategoriesService {
       id: category.id,
       title: category.name,
       slug: category.slug,
+      categoriesImage: category.categoriesImage,
       productCount: dto.productIds ? dto.productIds.length : 0,
       status: 'ACTIVE',
       createdAt: category.createdAt,
@@ -65,6 +67,7 @@ export class CategoriesService {
       id: c.id,
       title: c.name,
       slug: c.slug,
+      categoriesImage: c.categoriesImage,
       productCount: c._count.products,
       status: 'ACTIVE',
       createdAt: c.createdAt,
@@ -91,6 +94,7 @@ export class CategoriesService {
       id: category.id,
       title: category.name,
       slug: category.slug,
+      categoriesImage: category.categoriesImage,
       productCount: category._count.products,
       status: 'ACTIVE',
       createdAt: category.createdAt,
@@ -116,6 +120,9 @@ export class CategoriesService {
       data: {
         ...(name && { name }),
         ...(slug && { slug }),
+        ...(dto.categoriesImage !== undefined && {
+          categoriesImage: dto.categoriesImage,
+        }),
       },
     });
 
@@ -136,6 +143,7 @@ export class CategoriesService {
       id: category.id,
       title: category.name,
       slug: category.slug,
+      categoriesImage: category.categoriesImage,
       productCount: count,
       status: 'ACTIVE',
       createdAt: category.createdAt,
@@ -147,4 +155,3 @@ export class CategoriesService {
     return this.prisma.category.delete({ where: { id: category.id } });
   }
 }
-

@@ -19,6 +19,19 @@ let ProductsService = class ProductsService {
         this.uploadService = uploadService;
     }
     async create(dto, files) {
+        const fs = await import('fs');
+        fs.appendFileSync('debug.txt', '--- CREATE PRODUCT DEBUG ---\n' +
+            'DTO: ' +
+            JSON.stringify(dto) +
+            '\n' +
+            'FILES: ' +
+            (files
+                ? JSON.stringify(files.map((f) => ({
+                    fieldname: f.fieldname,
+                    originalname: f.originalname,
+                })))
+                : 'undefined or null') +
+            '\n\n');
         const name = dto.name || dto.title;
         if (!name) {
             throw new BadRequestException('Product name or title is required');
@@ -64,23 +77,48 @@ let ProductsService = class ProductsService {
                     stock: dto.quantity !== undefined ? dto.quantity : 0,
                 },
             ];
+        let imageCreates = [];
+        let currentOrder = 0;
+        if (dto.images && Array.isArray(dto.images)) {
+            for (const img of dto.images) {
+                let url = '';
+                let publicId = 'legacy-or-external';
+                if (typeof img === 'string') {
+                    url = img;
+                    const parts = url.split('/');
+                    const filename = parts.pop() || '';
+                    const folder = parts.pop() || '';
+                    if (filename && folder && folder !== 'upload') {
+                        publicId = `${folder}/${filename.split('.')[0]}`;
+                    }
+                    else if (filename) {
+                        publicId = filename.split('.')[0];
+                    }
+                }
+                else if (img && typeof img === 'object' && img.url) {
+                    url = img.url;
+                    publicId = img.publicId || publicId;
+                }
+                if (url) {
+                    imageCreates.push({
+                        publicId,
+                        url,
+                        order: currentOrder++,
+                        isPrimary: currentOrder === 1,
+                    });
+                }
+            }
+        }
         if (files && files.length > 0) {
             const uploadedUrls = await this.uploadService.uploadImages(files);
-            if (!dto.images)
-                dto.images = [];
-            dto.images.push(...uploadedUrls.map((res) => res.url));
+            const fileCreates = uploadedUrls.map((res) => ({
+                publicId: res.publicId,
+                url: res.url,
+                order: currentOrder++,
+                isPrimary: currentOrder === 1,
+            }));
+            imageCreates = [...imageCreates, ...fileCreates];
         }
-        const finalImages = (dto.images || [])
-            .map((img) => {
-            if (typeof img === 'string') {
-                return img;
-            }
-            else if (img && typeof img === 'object' && img.url) {
-                return String(img.url);
-            }
-            return null;
-        })
-            .filter((img) => img !== null);
         const product = (await this.prisma.product.create({
             data: {
                 name,
@@ -91,16 +129,20 @@ let ProductsService = class ProductsService {
                 variants: {
                     create: finalVariants,
                 },
-                images: finalImages,
+                images: {
+                    create: imageCreates,
+                },
             },
             include: {
                 category: true,
                 variants: true,
+                images: {
+                    orderBy: { order: 'asc' },
+                },
             },
         }));
         const defaultVariant = product.variants[0];
         const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
-        const imageUrls = product.images || [];
         return {
             id: product.id,
             title: product.name,
@@ -108,7 +150,7 @@ let ProductsService = class ProductsService {
             quantity: totalStock,
             price: defaultVariant ? defaultVariant.price.toString() : '0.00',
             vendorName: 'NestMart',
-            images: imageUrls,
+            images: product.images || [],
             slug: product.slug,
             categoryId: product.categoryId,
             category: product.category,
@@ -120,13 +162,15 @@ let ProductsService = class ProductsService {
             include: {
                 category: true,
                 variants: true,
+                images: {
+                    orderBy: { order: 'asc' },
+                },
             },
             orderBy: { createdAt: 'desc' },
         });
         return products.map((p) => {
             const defaultVariant = p.variants[0];
             const totalStock = p.variants.reduce((sum, v) => sum + v.stock, 0);
-            const imageUrls = p.images || [];
             return {
                 id: p.id,
                 title: p.name,
@@ -134,7 +178,7 @@ let ProductsService = class ProductsService {
                 quantity: totalStock,
                 price: defaultVariant ? defaultVariant.price.toString() : '0.00',
                 vendorName: 'NestMart',
-                images: imageUrls,
+                images: p.images || [],
                 slug: p.slug,
                 categoryId: p.categoryId,
                 category: p.category,
@@ -151,6 +195,9 @@ let ProductsService = class ProductsService {
             include: {
                 category: true,
                 variants: true,
+                images: {
+                    orderBy: { order: 'asc' },
+                },
                 reviews: {
                     include: { user: { include: { profile: true } } },
                 },
@@ -168,7 +215,6 @@ let ProductsService = class ProductsService {
             .catch(() => { });
         const defaultVariant = product.variants[0];
         const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
-        const imageUrls = product.images || [];
         return {
             id: product.id,
             title: product.name,
@@ -176,7 +222,7 @@ let ProductsService = class ProductsService {
             quantity: totalStock,
             price: defaultVariant ? defaultVariant.price.toString() : '0.00',
             vendorName: 'NestMart',
-            images: imageUrls,
+            images: product.images || [],
             slug: product.slug,
             categoryId: product.categoryId,
             category: product.category,
@@ -253,34 +299,84 @@ let ProductsService = class ProductsService {
                 });
             }
         }
-        if (files && files.length > 0) {
-            const uploadedUrls = await this.uploadService.uploadImages(files);
-            if (!dto.images)
-                dto.images = [];
-            dto.images.push(...uploadedUrls.map((res) => res.url));
-        }
-        if (dto.images) {
-            const finalImages = dto.images
-                .map((img) => {
+        const additionalImages = [];
+        if (dto.images && Array.isArray(dto.images) && dto.images.length > 0) {
+            for (const img of dto.images) {
+                let url = '';
+                let publicId = 'legacy-or-external';
                 if (typeof img === 'string') {
-                    return img;
+                    url = img;
+                    const parts = url.split('/');
+                    const filename = parts.pop() || '';
+                    const folder = parts.pop() || '';
+                    if (filename && folder && folder !== 'upload') {
+                        publicId = `${folder}/${filename.split('.')[0]}`;
+                    }
+                    else if (filename) {
+                        publicId = filename.split('.')[0];
+                    }
                 }
                 else if (img && typeof img === 'object' && img.url) {
-                    return String(img.url);
+                    url = img.url;
+                    publicId = img.publicId || publicId;
                 }
-                return null;
-            })
-                .filter((img) => img !== null);
-            await this.prisma.product.update({
+                if (url) {
+                    additionalImages.push({ publicId, url });
+                }
+            }
+        }
+        if ((files && files.length > 0) || additionalImages.length > 0) {
+            const product = await this.prisma.product.findUnique({
                 where: { id },
-                data: { images: finalImages },
+                include: { images: true },
             });
+            let currentImageCount = product?.images.length || 0;
+            let imageCreates = [];
+            for (const img of additionalImages) {
+                imageCreates.push({
+                    productId: id,
+                    publicId: img.publicId,
+                    url: img.url,
+                    order: currentImageCount++,
+                    isPrimary: currentImageCount === 1,
+                });
+            }
+            if (files && files.length > 0) {
+                const uploadedUrls = await this.uploadService.uploadImages(files);
+                const fileCreates = uploadedUrls.map((res) => ({
+                    productId: id,
+                    publicId: res.publicId,
+                    url: res.url,
+                    order: currentImageCount++,
+                    isPrimary: currentImageCount === 1,
+                }));
+                imageCreates = [...imageCreates, ...fileCreates];
+            }
+            if (imageCreates.length > 0) {
+                await this.prisma.productImage.createMany({
+                    data: imageCreates,
+                });
+            }
         }
         return this.findOne(id);
     }
     async remove(id) {
         const product = await this.findOne(id);
+        const images = await this.prisma.productImage.findMany({
+            where: { productId: product.id },
+        });
+        for (const img of images) {
+            try {
+                await this.uploadService.deleteImage(img.publicId);
+            }
+            catch (err) {
+                console.error(`Failed to delete image ${img.publicId} from Cloudinary:`, err);
+            }
+        }
         await this.prisma.productVariant.deleteMany({
+            where: { productId: product.id },
+        });
+        await this.prisma.productImage.deleteMany({
             where: { productId: product.id },
         });
         return this.prisma.product.delete({

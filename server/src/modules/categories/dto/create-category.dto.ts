@@ -13,9 +13,12 @@ export class CreateCategoryDto {
   @IsOptional()
   slug?: string;
 
+  @IsString()
+  @IsOptional()
+  categoriesImage?: string;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   productIds?: string[];
 }
-

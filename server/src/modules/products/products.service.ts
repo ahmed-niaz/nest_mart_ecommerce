@@ -15,11 +15,29 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploadService: UploadService,
-  ) { }
+  ) {}
 
-
-  // create products and also store image in the cloudinary and return the images url.
+  // create products and optionally store initial images
   async create(dto: CreateProductDto, files?: Express.Multer.File[]) {
+    const fs = await import('fs');
+    fs.appendFileSync(
+      'debug.txt',
+      '--- CREATE PRODUCT DEBUG ---\n' +
+        'DTO: ' +
+        JSON.stringify(dto) +
+        '\n' +
+        'FILES: ' +
+        (files
+          ? JSON.stringify(
+              files.map((f) => ({
+                fieldname: f.fieldname,
+                originalname: f.originalname,
+              })),
+            )
+          : 'undefined or null') +
+        '\n\n',
+    );
+
     const name = dto.name || dto.title;
     if (!name) {
       throw new BadRequestException('Product name or title is required');
@@ -58,39 +76,70 @@ export class ProductsService {
     const finalVariants =
       dto.variants && dto.variants.length > 0
         ? dto.variants.map((v) => ({
-          sku:
-            v.sku ||
-            `SKU-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-          price: v.price !== undefined ? v.price : 0,
-          stock: v.stock !== undefined ? v.stock : 0,
-        }))
-        : [
-          {
             sku:
-              dto.sku ||
+              v.sku ||
               `SKU-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-            price: dto.price !== undefined ? dto.price : 0,
-            stock: dto.quantity !== undefined ? dto.quantity : 0,
-          },
-        ];
+            price: v.price !== undefined ? v.price : 0,
+            stock: v.stock !== undefined ? v.stock : 0,
+          }))
+        : [
+            {
+              sku:
+                dto.sku ||
+                `SKU-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+              price: dto.price !== undefined ? dto.price : 0,
+              stock: dto.quantity !== undefined ? dto.quantity : 0,
+            },
+          ];
 
-    if (files && files.length > 0) {
-      const uploadedUrls = await this.uploadService.uploadImages(files);
-      if (!dto.images) dto.images = [];
-      dto.images.push(...uploadedUrls.map((res) => res.url));
+    // Process initial uploaded images
+    let imageCreates: any[] = [];
+    let currentOrder = 0;
+
+    // 1. First, process any pre-uploaded images sent in the DTO
+    if (dto.images && Array.isArray(dto.images)) {
+      for (const img of dto.images) {
+        let url = '';
+        let publicId = 'legacy-or-external';
+
+        if (typeof img === 'string') {
+          url = img;
+          // Attempt to extract Cloudinary public ID if possible
+          const parts = url.split('/');
+          const filename = parts.pop() || '';
+          const folder = parts.pop() || '';
+          if (filename && folder && folder !== 'upload') {
+            publicId = `${folder}/${filename.split('.')[0]}`;
+          } else if (filename) {
+            publicId = filename.split('.')[0];
+          }
+        } else if (img && typeof img === 'object' && img.url) {
+          url = img.url;
+          publicId = img.publicId || publicId;
+        }
+
+        if (url) {
+          imageCreates.push({
+            publicId,
+            url,
+            order: currentOrder++,
+            isPrimary: currentOrder === 1,
+          });
+        }
+      }
     }
 
-    // Process images safely with type guard
-    const finalImages: string[] = (dto.images || [])
-      .map((img: any) => {
-        if (typeof img === 'string') {
-          return img;
-        } else if (img && typeof img === 'object' && img.url) {
-          return String(img.url);
-        }
-        return null;
-      })
-      .filter((img): img is string => img !== null);
+    // 2. Second, process newly uploaded files
+    if (files && files.length > 0) {
+      const uploadedUrls = await this.uploadService.uploadImages(files);
+      const fileCreates = uploadedUrls.map((res) => ({
+        publicId: res.publicId,
+        url: res.url,
+        order: currentOrder++,
+        isPrimary: currentOrder === 1,
+      }));
+      imageCreates = [...imageCreates, ...fileCreates];
+    }
 
     const product = (await this.prisma.product.create({
       data: {
@@ -102,11 +151,16 @@ export class ProductsService {
         variants: {
           create: finalVariants,
         },
-        images: finalImages,
+        images: {
+          create: imageCreates,
+        },
       },
       include: {
         category: true,
         variants: true,
+        images: {
+          orderBy: { order: 'asc' },
+        },
       },
     })) as any;
 
@@ -115,7 +169,6 @@ export class ProductsService {
       (sum: number, v: any) => sum + v.stock,
       0,
     );
-    const imageUrls = product.images || [];
 
     return {
       id: product.id,
@@ -124,7 +177,7 @@ export class ProductsService {
       quantity: totalStock,
       price: defaultVariant ? defaultVariant.price.toString() : '0.00',
       vendorName: 'NestMart',
-      images: imageUrls,
+      images: product.images || [],
       slug: product.slug,
       categoryId: product.categoryId,
       category: product.category,
@@ -137,6 +190,9 @@ export class ProductsService {
       include: {
         category: true,
         variants: true,
+        images: {
+          orderBy: { order: 'asc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -147,7 +203,6 @@ export class ProductsService {
         (sum: number, v: any) => sum + v.stock,
         0,
       );
-      const imageUrls = p.images || [];
 
       return {
         id: p.id,
@@ -156,7 +211,7 @@ export class ProductsService {
         quantity: totalStock,
         price: defaultVariant ? defaultVariant.price.toString() : '0.00',
         vendorName: 'NestMart',
-        images: imageUrls,
+        images: p.images || [],
         slug: p.slug,
         categoryId: p.categoryId,
         category: p.category,
@@ -164,8 +219,6 @@ export class ProductsService {
       };
     });
   }
-
-  // todo: find products based on the id
 
   async findOne(idOrSlug: string) {
     const isUuid =
@@ -179,6 +232,9 @@ export class ProductsService {
       include: {
         category: true,
         variants: true,
+        images: {
+          orderBy: { order: 'asc' },
+        },
         reviews: {
           include: { user: { include: { profile: true } } },
         },
@@ -196,14 +252,13 @@ export class ProductsService {
         create: { productId: product.id, views: 1 },
         update: { views: { increment: 1 } },
       })
-      .catch(() => { });
+      .catch(() => {});
 
     const defaultVariant = product.variants[0];
     const totalStock = product.variants.reduce(
       (sum: number, v: any) => sum + v.stock,
       0,
     );
-    const imageUrls = product.images || [];
 
     return {
       id: product.id,
@@ -212,7 +267,7 @@ export class ProductsService {
       quantity: totalStock,
       price: defaultVariant ? defaultVariant.price.toString() : '0.00',
       vendorName: 'NestMart',
-      images: imageUrls,
+      images: product.images || [],
       slug: product.slug,
       categoryId: product.categoryId,
       category: product.category,
@@ -224,7 +279,11 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, dto: UpdateProductDto, files?: Express.Multer.File[]) {
+  async update(
+    id: string,
+    dto: UpdateProductDto,
+    files?: Express.Multer.File[],
+  ) {
     await this.findOne(id);
 
     const name = dto.name || dto.title;
@@ -299,29 +358,74 @@ export class ProductsService {
       }
     }
 
-    if (files && files.length > 0) {
-      const uploadedUrls = await this.uploadService.uploadImages(files);
-      if (!dto.images) dto.images = [];
-      dto.images.push(...uploadedUrls.map((res) => res.url));
+    // Handle pre-uploaded image URLs in DTO if they are explicitly sent
+    // We only process dto.images if it exists, appending them to the gallery
+    const additionalImages: any[] = [];
+    if (dto.images && Array.isArray(dto.images) && dto.images.length > 0) {
+      for (const img of dto.images) {
+        let url = '';
+        let publicId = 'legacy-or-external';
+
+        if (typeof img === 'string') {
+          url = img;
+          const parts = url.split('/');
+          const filename = parts.pop() || '';
+          const folder = parts.pop() || '';
+          if (filename && folder && folder !== 'upload') {
+            publicId = `${folder}/${filename.split('.')[0]}`;
+          } else if (filename) {
+            publicId = filename.split('.')[0];
+          }
+        } else if (img && typeof img === 'object' && img.url) {
+          url = img.url;
+          publicId = img.publicId || publicId;
+        }
+
+        if (url) {
+          additionalImages.push({ publicId, url });
+        }
+      }
     }
 
-    // Handle images update safely
-    if (dto.images) {
-      const finalImages: string[] = dto.images
-        .map((img: any) => {
-          if (typeof img === 'string') {
-            return img;
-          } else if (img && typeof img === 'object' && img.url) {
-            return String(img.url);
-          }
-          return null;
-        })
-        .filter((img): img is string => img !== null);
-
-      await this.prisma.product.update({
+    // However, if files are provided during update (e.g. from a legacy form submission),
+    // we can append them too.
+    if ((files && files.length > 0) || additionalImages.length > 0) {
+      const product = await this.prisma.product.findUnique({
         where: { id },
-        data: { images: finalImages },
+        include: { images: true },
       });
+      let currentImageCount = product?.images.length || 0;
+      let imageCreates: any[] = [];
+
+      // Append DTO images
+      for (const img of additionalImages) {
+        imageCreates.push({
+          productId: id,
+          publicId: img.publicId,
+          url: img.url,
+          order: currentImageCount++,
+          isPrimary: currentImageCount === 1,
+        });
+      }
+
+      // Append files
+      if (files && files.length > 0) {
+        const uploadedUrls = await this.uploadService.uploadImages(files);
+        const fileCreates = uploadedUrls.map((res) => ({
+          productId: id,
+          publicId: res.publicId,
+          url: res.url,
+          order: currentImageCount++,
+          isPrimary: currentImageCount === 1,
+        }));
+        imageCreates = [...imageCreates, ...fileCreates];
+      }
+
+      if (imageCreates.length > 0) {
+        await this.prisma.productImage.createMany({
+          data: imageCreates,
+        });
+      }
     }
 
     return this.findOne(id);
@@ -330,8 +434,29 @@ export class ProductsService {
   async remove(id: string) {
     const product = await this.findOne(id);
 
+    // Fetch images to delete from Cloudinary before deleting product
+    const images = await this.prisma.productImage.findMany({
+      where: { productId: product.id },
+    });
+
+    for (const img of images) {
+      try {
+        await this.uploadService.deleteImage(img.publicId);
+      } catch (err) {
+        console.error(
+          `Failed to delete image ${img.publicId} from Cloudinary:`,
+          err,
+        );
+      }
+    }
+
     // Delete variants first to avoid constraint issues if cascade is not configured
     await this.prisma.productVariant.deleteMany({
+      where: { productId: product.id },
+    });
+
+    // Product images will be cascade deleted by Prisma if configured, but let's be explicit
+    await this.prisma.productImage.deleteMany({
       where: { productId: product.id },
     });
 
@@ -340,4 +465,3 @@ export class ProductsService {
     });
   }
 }
-

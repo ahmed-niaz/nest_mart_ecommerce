@@ -10,7 +10,10 @@ import {
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import {
+  AnyFilesInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
@@ -27,7 +30,7 @@ export class ProductsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  @UseInterceptors(AnyFilesInterceptor())
+  @UseInterceptors(FilesInterceptor('images', 10)) // Explicitly capture 'images' field, max 10 files
   create(
     @Body() createProductDto: CreateProductDto,
     @UploadedFiles() files?: Express.Multer.File[],
