@@ -51,6 +51,10 @@ export class CreateProductDto {
     quantity;
     sku;
     barcode;
+    vendorName;
+    category;
+    themeTemplate;
+    tags;
     variants;
     images;
 }
@@ -99,12 +103,14 @@ __decorate([
     __metadata("design:type", Array)
 ], CreateProductDto.prototype, "collectionIds", void 0);
 __decorate([
+    Type(() => Number),
     IsNumber(),
     Min(0),
     IsOptional(),
     __metadata("design:type", Number)
 ], CreateProductDto.prototype, "price", void 0);
 __decorate([
+    Type(() => Number),
     IsNumber(),
     Min(0),
     IsOptional(),
@@ -120,6 +126,35 @@ __decorate([
     IsOptional(),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "barcode", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "vendorName", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "category", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], CreateProductDto.prototype, "themeTemplate", void 0);
+__decorate([
+    IsArray(),
+    IsString({ each: true }),
+    IsOptional(),
+    Transform(({ value }) => {
+        try {
+            return typeof value === 'string' ? JSON.parse(value) : value;
+        }
+        catch {
+            return value;
+        }
+    }),
+    __metadata("design:type", Array)
+], CreateProductDto.prototype, "tags", void 0);
 __decorate([
     IsArray(),
     ValidateNested({ each: true }),

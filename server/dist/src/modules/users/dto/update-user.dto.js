@@ -13,6 +13,10 @@ export class UpdateUserDto {
     lastName;
     phone;
     avatar;
+    email;
+    address;
+    city;
+    postalCode;
 }
 __decorate([
     IsString(),
@@ -37,4 +41,24 @@ __decorate([
     IsOptional(),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "avatar", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "email", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "address", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "city", void 0);
+__decorate([
+    IsString(),
+    IsOptional(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "postalCode", void 0);
 //# sourceMappingURL=update-user.dto.js.map

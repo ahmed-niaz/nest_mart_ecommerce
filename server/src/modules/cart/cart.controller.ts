@@ -11,6 +11,7 @@ import {
 import { CartService } from './cart.service.js';
 import { AddToCartDto } from './dto/add-to-cart.dto.js';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto.js';
+import { SyncCartDto } from './dto/sync-cart.dto.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
@@ -22,6 +23,11 @@ export class CartController {
   @Get()
   getCart(@CurrentUser('id') userId: string) {
     return this.cartService.getCart(userId);
+  }
+
+  @Post('sync')
+  syncCart(@CurrentUser('id') userId: string, @Body() dto: SyncCartDto) {
+    return this.cartService.syncCart(userId, dto.items);
   }
 
   @Post('items')

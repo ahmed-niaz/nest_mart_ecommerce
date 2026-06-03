@@ -1,14 +1,25 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authApi, User, LoginResponse } from './api';
-import Cookies from 'js-cookie';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { authApi, User, LoginResponse } from "./api";
+import Cookies from "js-cookie";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    firstName?: string,
+    lastName?: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
 }
@@ -19,28 +30,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   async function checkAuth() {
     try {
-      const token = Cookies.get('accessToken');
+      const token = Cookies.get("accessToken");
       if (token) {
         const response = await authApi.me();
         setUser(response.data);
       }
     } catch {
-      Cookies.remove('accessToken', { path: '/' });
-      Cookies.remove('refreshToken', { path: '/' });
+      Cookies.remove("accessToken", { path: "/" });
+      Cookies.remove("refreshToken", { path: "/" });
     } finally {
       setIsLoading(false);
     }
   }
 
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
   const handleAuthResponse = (data: LoginResponse) => {
-    Cookies.set('accessToken', data.data.accessToken, { expires: 15 / (24 * 60), path: '/' }); // 15 min
-    Cookies.set('refreshToken', data.data.refreshToken, { expires: 7, path: '/' });
+    Cookies.set("accessToken", data.data.accessToken, {
+      expires: 15 / (24 * 60),
+      path: "/",
+    }); // 15 min
+    Cookies.set("refreshToken", data.data.refreshToken, {
+      expires: 7,
+      path: "/",
+    });
     setUser(data.data.user);
   };
 
@@ -49,8 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     handleAuthResponse(response);
   };
 
-  const register = async (email: string, password: string, firstName?: string, lastName?: string) => {
-    const response = await authApi.register({ email, password, firstName, lastName });
+  const register = async (
+    email: string,
+    password: string,
+    firstName?: string,
+    lastName?: string,
+  ) => {
+    const response = await authApi.register({
+      email,
+      password,
+      firstName,
+      lastName,
+    });
     handleAuthResponse(response);
   };
 
@@ -58,11 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
-      Cookies.remove('accessToken', { path: '/' });
-      Cookies.remove('refreshToken', { path: '/' });
+      Cookies.remove("accessToken", { path: "/" });
+      Cookies.remove("refreshToken", { path: "/" });
       setUser(null);
+      window.location.href = "/login";
     }
   };
 
@@ -72,7 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, googleLogin }}>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, register, logout, googleLogin }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -81,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

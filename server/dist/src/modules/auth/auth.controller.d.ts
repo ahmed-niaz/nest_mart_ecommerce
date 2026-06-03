@@ -51,6 +51,10 @@ export declare class AuthController {
         accessToken: string;
         refreshToken: string;
     }>;
+    logout(): {
+        success: boolean;
+        message: string;
+    };
     getProfile(userId: string): Promise<{
         id: any;
         email: any;

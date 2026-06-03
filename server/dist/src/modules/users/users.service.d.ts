@@ -18,24 +18,29 @@ export declare class UsersService implements OnModuleInit {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;
     findByEmail(email: string): Promise<({
         profile: {
+            id: string;
+            userId: string;
             firstName: string | null;
             lastName: string | null;
             phone: string | null;
-            id: string;
-            userId: string;
             avatarUrl: string | null;
         } | null;
     } & {
-        email: string;
         id: string;
+        email: string;
         passwordHash: string;
         role: import("generated/prisma/index.js").$Enums.Role;
         isActive: boolean;
+        isVerified: boolean;
         lastLoginAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
@@ -49,6 +54,10 @@ export declare class UsersService implements OnModuleInit {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;
@@ -61,6 +70,10 @@ export declare class UsersService implements OnModuleInit {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null)[]>;
@@ -73,6 +86,10 @@ export declare class UsersService implements OnModuleInit {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;

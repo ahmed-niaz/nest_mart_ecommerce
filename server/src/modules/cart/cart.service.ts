@@ -97,4 +97,43 @@ export class CartService {
 
     return this.getCart(userId);
   }
+
+  async syncCart(
+    userId: string,
+    items: { variantId: string; quantity: number }[],
+  ) {
+    const cart = await this.getCart(userId);
+
+    // Remove old items
+    await this.prisma.cartItem.deleteMany({
+      where: { cartId: cart.id },
+    });
+
+    if (!items || items.length === 0) {
+      return this.getCart(userId);
+    }
+
+    const dataToInsert = [];
+    for (const item of items) {
+      const variant = await this.prisma.productVariant.findUnique({
+        where: { id: item.variantId },
+      });
+      if (variant) {
+        dataToInsert.push({
+          cartId: cart.id,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          priceSnap: variant.price,
+        });
+      }
+    }
+
+    if (dataToInsert.length > 0) {
+      await this.prisma.cartItem.createMany({
+        data: dataToInsert,
+      });
+    }
+
+    return this.getCart(userId);
+  }
 }

@@ -5,7 +5,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const logger = new Logger('Bootstrap');
 
   // Global prefix for all routes: /api/v1/... (excluding root '/')
@@ -15,7 +15,11 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
+    origin: [
+      process.env['CORS_ORIGIN'] || 'http://localhost:3000',
+      'https://nest-mart-frontend.vercel.app',
+      'http://localhost:3000',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });

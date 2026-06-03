@@ -63,6 +63,7 @@ model User {
   passwordHash String    @map("password_hash")
   role         Role      @default(CUSTOMER)
   isActive     Boolean   @default(true)
+  isVerified   Boolean   @default(false)
   lastLoginAt  DateTime?
 
   profile       Profile?

@@ -6,10 +6,13 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getOverview() {
-    // 1. Total Revenue
+    // 1. Total Revenue (only from paid orders)
     const revenueSum = await this.prisma.order.aggregate({
       _sum: {
         total: true,
+      },
+      where: {
+        paymentStatus: 'COMPLETED',
       },
     });
     const totalRevenue = revenueSum._sum.total

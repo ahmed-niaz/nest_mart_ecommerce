@@ -98,6 +98,16 @@ export class AuthController {
   }
 
   /**
+   * POST /auth/logout
+   * Logout the current user (client clears tokens)
+   */
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  logout() {
+    return { success: true, message: 'Logged out successfully' };
+  }
+
+  /**
    * GET /auth/me
    * Get current authenticated user profile
    */

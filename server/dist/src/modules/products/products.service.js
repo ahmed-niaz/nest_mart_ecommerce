@@ -157,18 +157,57 @@ let ProductsService = class ProductsService {
             variants: product.variants,
         };
     }
-    async findAll() {
-        const products = await this.prisma.product.findMany({
-            include: {
-                category: true,
-                variants: true,
-                images: {
-                    orderBy: { order: 'asc' },
+    async findAll(category, search, sort, page, limit, pagination) {
+        const whereClause = {};
+        if (category) {
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(category);
+            if (isUuid) {
+                whereClause.categoryId = category;
+            }
+            else {
+                const found = await this.prisma.category.findUnique({
+                    where: { slug: category },
+                });
+                if (found) {
+                    whereClause.categoryId = found.id;
+                }
+                else {
+                    return pagination
+                        ? { products: [], total: 0, page: 1, limit: Number(limit) || 12 }
+                        : [];
+                }
+            }
+        }
+        if (search) {
+            whereClause.name = { contains: search, mode: 'insensitive' };
+        }
+        let orderBy = { createdAt: 'desc' };
+        if (sort === 'oldest')
+            orderBy = { createdAt: 'asc' };
+        if (sort === 'name-asc')
+            orderBy = { name: 'asc' };
+        if (sort === 'name-desc')
+            orderBy = { name: 'desc' };
+        const pageNum = Number(page) || 1;
+        const limitNum = Number(limit) || 12;
+        const [total, products] = await Promise.all([
+            this.prisma.product.count({ where: whereClause }),
+            this.prisma.product.findMany({
+                where: whereClause,
+                include: {
+                    category: true,
+                    variants: true,
+                    images: {
+                        orderBy: { order: 'asc' },
+                    },
                 },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-        return products.map((p) => {
+                orderBy,
+                ...(pagination
+                    ? { skip: (pageNum - 1) * limitNum, take: limitNum }
+                    : {}),
+            }),
+        ]);
+        const mapped = products.map((p) => {
             const defaultVariant = p.variants[0];
             const totalStock = p.variants.reduce((sum, v) => sum + v.stock, 0);
             return {
@@ -183,8 +222,19 @@ let ProductsService = class ProductsService {
                 categoryId: p.categoryId,
                 category: p.category,
                 variants: p.variants,
+                createdAt: p.createdAt,
             };
         });
+        if (sort === 'price-low') {
+            mapped.sort((a, b) => Number(a.price) - Number(b.price));
+        }
+        else if (sort === 'price-high') {
+            mapped.sort((a, b) => Number(b.price) - Number(a.price));
+        }
+        if (pagination) {
+            return { products: mapped, total, page: pageNum, limit: limitNum };
+        }
+        return mapped;
     }
     async findOne(idOrSlug) {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idOrSlug);

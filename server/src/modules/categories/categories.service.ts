@@ -44,6 +44,7 @@ export class CategoriesService {
 
     return {
       id: category.id,
+      name: category.name,
       title: category.name,
       slug: category.slug,
       categoriesImage: category.categoriesImage,
@@ -65,6 +66,7 @@ export class CategoriesService {
 
     return categories.map((c) => ({
       id: c.id,
+      name: c.name,
       title: c.name,
       slug: c.slug,
       categoriesImage: c.categoriesImage,
@@ -92,6 +94,7 @@ export class CategoriesService {
     if (!category) throw new NotFoundException('Category not found');
     return {
       id: category.id,
+      name: category.name,
       title: category.name,
       slug: category.slug,
       categoriesImage: category.categoriesImage,
@@ -141,6 +144,7 @@ export class CategoriesService {
 
     return {
       id: category.id,
+      name: category.name,
       title: category.name,
       slug: category.slug,
       categoriesImage: category.categoriesImage,

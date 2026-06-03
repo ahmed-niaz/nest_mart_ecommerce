@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 // Root controller
 import { AppController } from './app.controller.js';
@@ -23,6 +24,8 @@ import { CouponsModule } from './modules/coupons/coupons.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { ProductImagesModule } from './modules/product-images/product-images.module.js';
+import { LatestProductsModule } from './modules/latest-products/latest-products.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
 
 // Guards
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard.js';
@@ -35,6 +38,12 @@ import { RolesGuard } from './common/guards/roles.guard.js';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
 
     // Database (Prisma)
     DatabaseModule,
@@ -54,6 +63,8 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     InventoryModule,
     AnalyticsModule,
     ProductImagesModule,
+    LatestProductsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -64,6 +75,10 @@ import { RolesGuard } from './common/guards/roles.guard.js';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

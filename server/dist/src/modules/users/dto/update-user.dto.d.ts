@@ -3,4 +3,8 @@ export declare class UpdateUserDto {
     lastName?: string;
     phone?: string;
     avatar?: string;
+    email?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
 }

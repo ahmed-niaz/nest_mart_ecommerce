@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck, RefreshCw, Shield } from "lucide-react";
+import { Truck, RefreshCw, Shield, Leaf, Clock, Award } from "lucide-react";
 
 export default function Features() {
   return (
@@ -12,7 +12,7 @@ export default function Features() {
               <Truck className="text-primary" size={24} />
             </div>
             <h3 className="font-semibold text-lg mb-2">Free Delivery</h3>
-            <p className="text-text-muted text-sm">On orders over $50</p>
+            <p className="text-text-muted text-sm">On orders over ৳50</p>
           </div>
           <div className="text-center group">
             <div className="w-14 h-14 mx-auto mb-4 bg-orange-50 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">

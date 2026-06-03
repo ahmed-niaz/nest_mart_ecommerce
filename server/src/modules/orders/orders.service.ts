@@ -72,7 +72,7 @@ export class OrdersService {
         : 0;
       if (subtotal < minPurchase) {
         throw new BadRequestException(
-          `Minimum purchase of $${minPurchase.toFixed(2)} is required for this coupon`,
+          `Minimum purchase of ৳${minPurchase.toFixed(2)} is required for this coupon`,
         );
       }
 

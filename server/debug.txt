@@ -14,3 +14,59 @@ FILES: []
 DTO: {"name":"Fresh Vegetables yeap","description":"Naturally grown fresh organic bananas rich in potassium and perfect for healthy snacks.","categoryId":"be0b61d5-21e6-4bc5-99a5-58b1de486d7a"}
 FILES: [{"fieldname":"images","originalname":"vegetables.jpg"}]
 
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Sundarbans Raw Honey","description":"Collected naturally from the mangrove forests of the Sundarbans. Rich in flavor, nutrients, and antioxidants with a distinctive wild floral taste.","categoryId":"bbb01ccf-dda2-4445-8cdc-533b12d9893b","price":850}
+FILES: [{"fieldname":"images","originalname":"Sundarbans_Raw_Honey.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Mustard Flower Honey","description":"Pure honey harvested from mustard flower fields across northern Bangladesh. Light golden in color with a mildly sweet and aromatic flavor.","categoryId":"bbb01ccf-dda2-4445-8cdc-533b12d9893b","price":650}
+FILES: [{"fieldname":"images","originalname":"Mustard_Flower_Honey.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"title":"Litchi Blossom Honey","description":"Sourced from litchi orchards in Rajshahi and Dinajpur. Smooth texture, fruity aroma, and naturally rich sweetness.","status":"ACTIVE","price":650,"quantity":150,"category":"T-Shirts","themeTemplate":"Default product"}
+FILES: [{"fieldname":"images","originalname":"honey_1.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Chia Seeds","description":"Rich in omega-3, fiber, and protein. Ideal for smoothies and healthy breakfasts.","categoryId":"6453207b-c420-4158-9b02-a8cd6e3bfbf1","price":250}
+FILES: [{"fieldname":"images","originalname":"cia_seeds_2.jpg"},{"fieldname":"images","originalname":"Chia_Seeds.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Moringa Powder","description":"Nutrient-dense superfood made from dried moringa leaves.","categoryId":"6453207b-c420-4158-9b02-a8cd6e3bfbf1","price":220}
+FILES: [{"fieldname":"images","originalname":"moringa_powder.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Isabgul Husk","description":"Natural dietary fiber that supports digestion.","categoryId":"6453207b-c420-4158-9b02-a8cd6e3bfbf1","price":280}
+FILES: [{"fieldname":"images","originalname":"Isabgul Husk.png"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Beetroot Powder","description":"Natural source of antioxidants and essential nutrients.","categoryId":"6453207b-c420-4158-9b02-a8cd6e3bfbf1","price":300}
+FILES: [{"fieldname":"images","originalname":"Beetroot_Powder.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Whole Wheat Flour","description":"Stone-ground whole wheat flour for everyday cooking.","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":85}
+FILES: [{"fieldname":"images","originalname":"Whole Wheat Flour.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Ragi Flour","description":"Nutritious finger millet flour rich in calcium","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":180}
+FILES: [{"fieldname":"images","originalname":"Ragi Flour.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Masoor Dal","description":"Popular red lentils used in Bangladeshi cuisine.","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":160}
+FILES: [{"fieldname":"images","originalname":"Masoor Dal.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Mung Dal","description":"Premium quality mung beans.","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":190}
+FILES: [{"fieldname":"images","originalname":"Masoor Dal.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Maskalai Dal","description":"Protein-rich black gram lentils.","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":210}
+FILES: [{"fieldname":"images","originalname":"maskalai dal.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"name":"Chickpeas","description":"Nutritious chickpeas for curries and snacks.","categoryId":"723a4267-465b-46db-bc94-aca8ecbee492","price":170}
+FILES: [{"fieldname":"images","originalname":"Chickpeas.jpg"}]
+
+--- CREATE PRODUCT DEBUG ---
+DTO: {"title":"Chinigura Rice","description":"Premium aromatic rice.","status":"ACTIVE","collectionIds":["70e0ee38-1027-4650-b5bb-c68dd4025d7c"],"price":160,"quantity":50,"sku":"rice","category":"723a4267-465b-46db-bc94-aca8ecbee492","themeTemplate":"Default product"}
+FILES: [{"fieldname":"images","originalname":"Chinigura Rice.jpg"}]
+

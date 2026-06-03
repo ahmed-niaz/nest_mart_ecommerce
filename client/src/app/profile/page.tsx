@@ -2,7 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { User, Mail, Phone, UserCircle, Camera, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  UserCircle,
+  Camera,
+  Loader2,
+  CheckCircle2,
+  MapPin,
+  Building,
+  Hash,
+  XCircle,
+} from "lucide-react";
 import Cookies from "js-cookie";
 
 export default function ProfilePage() {
@@ -15,6 +27,10 @@ export default function ProfilePage() {
     lastName: "",
     phone: "",
     avatar: "",
+    email: "",
+    address: "",
+    city: "",
+    postalCode: "",
   });
 
   useEffect(() => {
@@ -25,6 +41,10 @@ export default function ProfilePage() {
         lastName: user.lastName || "",
         phone: user.phone || "",
         avatar: user.avatar || "",
+        email: user.email || "",
+        address: user.address || "",
+        city: user.city || "",
+        postalCode: user.postalCode || "",
       });
     }
   }, [user]);
@@ -35,7 +55,8 @@ export default function ProfilePage() {
     setSuccess(false);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/users/me`, {
         method: "PATCH",
         headers: {
@@ -57,6 +78,33 @@ export default function ProfilePage() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+
+      const res = await fetch(`${baseUrl}/uploads/image`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: uploadData,
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        setFormData({ ...formData, avatar: data.url });
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -68,16 +116,26 @@ export default function ProfilePage() {
             <div className="relative group">
               <div className="h-32 w-32 rounded-full bg-surface border-4 border-white shadow-lg overflow-hidden">
                 {formData.avatar ? (
-                  <img src={formData.avatar} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={formData.avatar}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="h-full w-full bg-background flex items-center justify-center text-text-muted">
                     <UserCircle className="h-16 w-16" />
                   </div>
                 )}
               </div>
-              <button className="absolute bottom-1 right-1 p-2 bg-surface rounded-full shadow-md border border-border-main hover:bg-zinc-50 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
+              <label className="absolute bottom-1 right-1 p-2 bg-surface rounded-full shadow-md border border-border-main hover:bg-zinc-50 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 cursor-pointer">
                 <Camera className="h-4 w-4 text-zinc-600" />
-              </button>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -85,71 +143,166 @@ export default function ProfilePage() {
         <div className="pt-20 pb-12 px-12">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-text-main">Account Settings</h1>
-              <p className="text-text-muted">Manage your personal information and preferences.</p>
+              <div className="flex items-center space-x-3">
+                <h1 className="text-2xl font-bold text-text-main">
+                  Account Settings
+                </h1>
+                {user.isVerified ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-widest">
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-600 uppercase tracking-widest">
+                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                    Unverified
+                  </span>
+                )}
+              </div>
+              <p className="text-text-muted mt-1">
+                Manage your personal information and preferences.
+              </p>
             </div>
             {success && (
               <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-4 py-2 rounded-full border border-green-100 animate-in fade-in slide-in-from-top-4">
                 <CheckCircle2 className="h-4 w-4" />
-                <span className="text-sm font-bold uppercase tracking-wider">Changes Saved</span>
+                <span className="text-sm font-bold uppercase tracking-wider">
+                  Changes Saved
+                </span>
               </div>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">First Name</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                  First Name
+                </label>
                 <div className="relative">
                   <User className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
                   <input
                     type="text"
                     className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, firstName: e.target.value })
+                    }
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Last Name</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                  Last Name
+                </label>
                 <div className="relative">
                   <User className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
                   <input
                     type="text"
                     className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastName: e.target.value })
+                    }
                   />
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2 opacity-60">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Email Address</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
                   <input
                     type="email"
-                    disabled
-                    className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm cursor-not-allowed"
-                    value={user.email}
+                    className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
-                <p className="text-[10px] text-text-muted mt-1 italic">Email cannot be changed.</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Phone Number</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                  Phone Number
+                </label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
                   <input
                     type="tel"
                     className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                   />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6 md:col-span-2">
+              <h3 className="text-lg font-bold text-text-main border-b border-border-main pb-2">
+                Address Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-2 md:col-span-3">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                    Street Address
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
+                    <input
+                      type="text"
+                      className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                    City
+                  </label>
+                  <div className="relative">
+                    <Building className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
+                    <input
+                      type="text"
+                      className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
+                      value={formData.city}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                    Postal Code
+                  </label>
+                  <div className="relative">
+                    <Hash className="absolute left-4 top-3 h-4 w-4 text-text-muted" />
+                    <input
+                      type="text"
+                      className="w-full pl-11 pr-4 py-3 bg-background border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
+                      value={formData.postalCode}
+                      onChange={(e) =>
+                        setFormData({ ...formData, postalCode: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>

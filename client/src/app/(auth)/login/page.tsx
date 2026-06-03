@@ -1,23 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/auth-context';
-import { loadGoogleSdk, googleSdkJs } from '@/lib/google-sdk';
-import Cookies from 'js-cookie';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useAuth } from "@/lib/auth-context";
+import { loadGoogleSdk, googleSdkJs } from "@/lib/google-sdk";
+import Cookies from "js-cookie";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -33,20 +40,23 @@ export default function LoginPage() {
     loadGoogleSdk();
 
     // Check for tokens in URL (for standard Google OAuth redirect flow callback)
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const token = params.get('accessToken');
-      const refresh = params.get('refreshToken');
-      const err = params.get('error');
+      const token = params.get("accessToken");
+      const refresh = params.get("refreshToken");
+      const err = params.get("error");
 
       if (err) {
         setError(err);
       } else if (token && refresh) {
         setIsGoogleLoading(true);
-        Cookies.set('accessToken', token, { expires: 15 / (24 * 60), path: '/' });
-        Cookies.set('refreshToken', refresh, { expires: 7, path: '/' });
+        Cookies.set("accessToken", token, {
+          expires: 15 / (24 * 60),
+          path: "/",
+        });
+        Cookies.set("refreshToken", refresh, { expires: 7, path: "/" });
         // Force reload to home page so that AuthProvider picks up the session cookies
-        window.location.href = '/';
+        window.location.href = "/";
       }
     }
   }, []);
@@ -63,9 +73,10 @@ export default function LoginPage() {
     try {
       setError(null);
       await login(data.email, data.password);
-      router.push('/');
+      router.push("/");
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 'Login failed. Please try again.';
+      const errorMessage =
+        err?.response?.data?.message || "Login failed. Please try again.";
       setError(errorMessage);
     }
   };
@@ -75,11 +86,11 @@ export default function LoginPage() {
     googleSdkJs()
       .then(async (accessToken) => {
         await googleLogin(accessToken);
-        router.push('/');
+        router.push("/");
       })
       .catch((err: any) => {
-        console.error('Google login error:', err);
-        setError(err?.message || 'Google login failed. Please try again.');
+        console.error("Google login error:", err);
+        setError(err?.message || "Google login failed. Please try again.");
         setIsGoogleLoading(false);
       });
   };
@@ -93,7 +104,9 @@ export default function LoginPage() {
               <span className="text-white font-bold text-2xl">N</span>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-text-main">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl font-bold text-text-main">
+            Welcome Back
+          </CardTitle>
           <CardDescription>Sign in to your NestMart account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,15 +116,21 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-gray-700">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                {...register('email')}
-                className={errors.email ? 'border-red-500 focus:ring-red-500' : 'focus:ring-orange-500'}
+                {...register("email")}
+                className={
+                  errors.email
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-orange-500"
+                }
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -119,14 +138,20 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">Password</Label>
+              <Label htmlFor="password" className="text-gray-700">
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  {...register('password')}
-                  className={errors.password ? 'border-red-500 pr-10 focus:ring-red-500' : 'pr-10 focus:ring-orange-500'}
+                  {...register("password")}
+                  className={
+                    errors.password
+                      ? "border-red-500 pr-10 focus:ring-red-500"
+                      : "pr-10 focus:ring-orange-500"
+                  }
                 />
                 <button
                   type="button"
@@ -137,23 +162,30 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             <div className="flex items-center justify-end">
-              <Link href="/forgot-password" className="text-sm text-primary hover:text-primary-hover hover:underline">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-primary hover:text-primary-hover hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" 
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
@@ -162,7 +194,9 @@ export default function LoginPage() {
               <div className="w-full border-t border-border-main"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-surface text-text-muted">Or continue with</span>
+              <span className="px-4 bg-surface text-text-muted">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -199,8 +233,11 @@ export default function LoginPage() {
           </Button>
 
           <p className="text-center text-sm text-gray-600 mt-6">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-primary hover:text-primary-hover font-medium hover:underline">
+            Don't have an account?{" "}
+            <Link
+              href="/register"
+              className="text-primary hover:text-primary-hover font-medium hover:underline"
+            >
               Sign up
             </Link>
           </p>

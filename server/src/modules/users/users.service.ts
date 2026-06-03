@@ -75,6 +75,10 @@ export class UsersService implements OnModuleInit {
       where: { id },
       include: {
         profile: true,
+        addresses: {
+          where: { isDefault: true },
+          take: 1,
+        },
       },
     });
 
@@ -115,6 +119,70 @@ export class UsersService implements OnModuleInit {
       }
     }
 
+    // Check email uniqueness if updating email
+    if (dto.email) {
+      const existingEmail = await this.prisma.user.findFirst({
+        where: {
+          email: dto.email,
+          NOT: { id: userId },
+        },
+      });
+
+      if (existingEmail) {
+        throw new ConflictException(
+          'This email is already in use by another account',
+        );
+      }
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { email: dto.email },
+      });
+    }
+
+    // Handle address
+    if (
+      dto.address !== undefined ||
+      dto.city !== undefined ||
+      dto.postalCode !== undefined
+    ) {
+      const defaultAddress = await this.prisma.address.findFirst({
+        where: { userId, isDefault: true },
+      });
+
+      const addressData = {
+        fullName:
+          dto.firstName && dto.lastName
+            ? `${dto.firstName} ${dto.lastName}`
+            : defaultAddress?.fullName || 'N/A',
+        phone: dto.phone || defaultAddress?.phone || 'N/A',
+        address:
+          dto.address !== undefined
+            ? dto.address
+            : defaultAddress?.address || 'N/A',
+        city: dto.city !== undefined ? dto.city : defaultAddress?.city || 'N/A',
+        postalCode:
+          dto.postalCode !== undefined
+            ? dto.postalCode
+            : defaultAddress?.postalCode || 'N/A',
+      };
+
+      if (defaultAddress) {
+        await this.prisma.address.update({
+          where: { id: defaultAddress.id },
+          data: addressData,
+        });
+      } else {
+        await this.prisma.address.create({
+          data: {
+            ...addressData,
+            userId,
+            isDefault: true,
+          },
+        });
+      }
+    }
+
     // Upsert profile
     await this.prisma.profile.upsert({
       where: { userId },
@@ -143,6 +211,10 @@ export class UsersService implements OnModuleInit {
     const users = await this.prisma.user.findMany({
       include: {
         profile: true,
+        addresses: {
+          where: { isDefault: true },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -174,6 +246,10 @@ export class UsersService implements OnModuleInit {
       avatar: user.profile?.avatarUrl,
       role: user.role,
       isActive: user.isActive,
+      isVerified: user.isVerified ?? false,
+      address: user.addresses?.[0]?.address || '',
+      city: user.addresses?.[0]?.city || '',
+      postalCode: user.addresses?.[0]?.postalCode || '',
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

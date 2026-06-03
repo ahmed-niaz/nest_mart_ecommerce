@@ -6,7 +6,10 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
-            callback: (response: { access_token: string; error?: unknown }) => void;
+            callback: (response: {
+              access_token: string;
+              error?: unknown;
+            }) => void;
           }) => {
             requestAccessToken: () => void;
           };
@@ -19,7 +22,7 @@ declare global {
 let sdkLoadingPromise: Promise<void> | null = null;
 
 export function loadGoogleSdk(): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
+  if (typeof window === "undefined") return Promise.resolve();
   if (window.google?.accounts?.oauth2) return Promise.resolve();
 
   if (sdkLoadingPromise) return sdkLoadingPromise;
@@ -27,7 +30,7 @@ export function loadGoogleSdk(): Promise<void> {
   sdkLoadingPromise = new Promise<void>((resolve, reject) => {
     // Check if script is already in the document
     const existingScript = document.querySelector(
-      'script[src="https://accounts.google.com/gsi/client"]'
+      'script[src="https://accounts.google.com/gsi/client"]',
     );
 
     if (existingScript) {
@@ -39,18 +42,18 @@ export function loadGoogleSdk(): Promise<void> {
           resolve();
         }
       }, 50);
-      
+
       setTimeout(() => {
         clearInterval(interval);
         if (!window.google?.accounts?.oauth2) {
-          reject(new Error('Google SDK load timeout'));
+          reject(new Error("Google SDK load timeout"));
         }
       }, 10000);
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     script.onload = () => {
@@ -61,16 +64,16 @@ export function loadGoogleSdk(): Promise<void> {
           resolve();
         }
       }, 50);
-      
+
       setTimeout(() => {
         clearInterval(interval);
         if (!window.google?.accounts?.oauth2) {
-          reject(new Error('Google SDK initialization timeout'));
+          reject(new Error("Google SDK initialization timeout"));
         }
       }, 5000);
     };
     script.onerror = () => {
-      reject(new Error('Failed to load Google SDK script'));
+      reject(new Error("Failed to load Google SDK script"));
     };
     document.body.appendChild(script);
   });
@@ -81,7 +84,7 @@ export function loadGoogleSdk(): Promise<void> {
 export function googleSdkJs(): Promise<string> {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
-    return Promise.reject(new Error('Google Client ID not configured'));
+    return Promise.reject(new Error("Google Client ID not configured"));
   }
 
   // If already loaded, trigger popup synchronously to prevent browser popup blocking
@@ -90,7 +93,7 @@ export function googleSdkJs(): Promise<string> {
       try {
         const client = window.google!.accounts.oauth2.initTokenClient({
           client_id: clientId,
-          scope: 'openid email profile',
+          scope: "openid email profile",
           callback: (response) => {
             if (response.error) {
               reject(new Error(`Google auth error: ${response.error}`));
@@ -99,7 +102,7 @@ export function googleSdkJs(): Promise<string> {
             if (response.access_token) {
               resolve(response.access_token);
             } else {
-              reject(new Error('Failed to get access token from Google'));
+              reject(new Error("Failed to get access token from Google"));
             }
           },
         });
@@ -113,13 +116,13 @@ export function googleSdkJs(): Promise<string> {
   // Fallback if not loaded yet: load it and then trigger
   return loadGoogleSdk().then(() => {
     if (!window.google?.accounts?.oauth2) {
-      throw new Error('Google SDK not fully loaded or initialized');
+      throw new Error("Google SDK not fully loaded or initialized");
     }
     return new Promise<string>((resolve, reject) => {
       try {
         const client = window.google!.accounts.oauth2.initTokenClient({
           client_id: clientId,
-          scope: 'openid email profile',
+          scope: "openid email profile",
           callback: (response) => {
             if (response.error) {
               reject(new Error(`Google auth error: ${response.error}`));
@@ -128,7 +131,7 @@ export function googleSdkJs(): Promise<string> {
             if (response.access_token) {
               resolve(response.access_token);
             } else {
-              reject(new Error('Failed to get access token from Google'));
+              reject(new Error("Failed to get access token from Google"));
             }
           },
         });

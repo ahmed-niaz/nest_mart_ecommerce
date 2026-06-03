@@ -17,7 +17,7 @@ export declare class ProductsController {
         category: any;
         variants: any;
     }>;
-    findAll(): Promise<{
+    findAll(category?: string, collection?: string, search?: string, sort?: string, page?: string, limit?: string, pagination?: string): Promise<{
         id: any;
         title: any;
         status: any;
@@ -29,7 +29,26 @@ export declare class ProductsController {
         categoryId: any;
         category: any;
         variants: any;
-    }[]>;
+        createdAt: any;
+    }[] | {
+        products: {
+            id: any;
+            title: any;
+            status: any;
+            quantity: any;
+            price: any;
+            vendorName: string;
+            images: any;
+            slug: any;
+            categoryId: any;
+            category: any;
+            variants: any;
+            createdAt: any;
+        }[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
     findOne(id: string): Promise<{
         id: any;
         title: any;

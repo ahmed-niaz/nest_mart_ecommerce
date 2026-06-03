@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -23,6 +24,8 @@ import { CouponsModule } from './modules/coupons/coupons.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
 import { ProductImagesModule } from './modules/product-images/product-images.module.js';
+import { LatestProductsModule } from './modules/latest-products/latest-products.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from './common/guards/roles.guard.js';
 let AppModule = class AppModule {
@@ -34,6 +37,12 @@ AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            ThrottlerModule.forRoot([
+                {
+                    ttl: 60000,
+                    limit: 100,
+                },
+            ]),
             DatabaseModule,
             AuthModule,
             UsersModule,
@@ -49,6 +58,8 @@ AppModule = __decorate([
             InventoryModule,
             AnalyticsModule,
             ProductImagesModule,
+            LatestProductsModule,
+            PaymentsModule,
         ],
         controllers: [AppController],
         providers: [
@@ -59,6 +70,10 @@ AppModule = __decorate([
             {
                 provide: APP_GUARD,
                 useClass: RolesGuard,
+            },
+            {
+                provide: APP_GUARD,
+                useClass: ThrottlerGuard,
             },
         ],
     })

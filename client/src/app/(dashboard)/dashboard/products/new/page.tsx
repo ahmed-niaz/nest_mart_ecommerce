@@ -37,7 +37,9 @@ export default function NewProductPage() {
   const [uploading, setUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [uploadedImages, setUploadedImages] = useState<{ file: File; previewUrl: string }[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<
+    { file: File; previewUrl: string }[]
+  >([]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -57,13 +59,26 @@ export default function NewProductPage() {
 
   // Fetch collections list using TanStack Query
   const { data: collectionsList = [] } = useQuery({
-    queryKey: ['collections'],
+    queryKey: ["collections"],
     queryFn: async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/collections`);
       const data = await res.json();
       return data.success ? data.data : [];
-    }
+    },
+  });
+
+  // Fetch categories list using TanStack Query
+  const { data: categoriesList = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const res = await fetch(`${baseUrl}/categories`);
+      const data = await res.json();
+      return data.success ? data.data : [];
+    },
   });
 
   // Handle local image selection
@@ -79,13 +94,15 @@ export default function NewProductPage() {
   };
 
   const removeImage = (urlToRemove: string) => {
-    setUploadedImages(uploadedImages.filter((img) => {
-      if (img.previewUrl === urlToRemove) {
-        URL.revokeObjectURL(img.previewUrl);
-        return false;
-      }
-      return true;
-    }));
+    setUploadedImages(
+      uploadedImages.filter((img) => {
+        if (img.previewUrl === urlToRemove) {
+          URL.revokeObjectURL(img.previewUrl);
+          return false;
+        }
+        return true;
+      }),
+    );
   };
 
   const addTag = () => {
@@ -106,17 +123,29 @@ export default function NewProductPage() {
     try {
       const uploadData = new FormData();
       uploadData.append("title", formData.title);
-      if (formData.description) uploadData.append("description", formData.description);
+      if (formData.description)
+        uploadData.append("description", formData.description);
       uploadData.append("price", (parseFloat(formData.price) || 0).toString());
-      if (formData.compareAtPrice) uploadData.append("compareAtPrice", formData.compareAtPrice);
-      if (formData.costPerItem) uploadData.append("costPerItem", formData.costPerItem);
-      uploadData.append("quantity", (parseInt(formData.quantity) || 0).toString());
+      if (formData.compareAtPrice)
+        uploadData.append("compareAtPrice", formData.compareAtPrice);
+      if (formData.costPerItem)
+        uploadData.append("costPerItem", formData.costPerItem);
+      uploadData.append(
+        "quantity",
+        (parseInt(formData.quantity) || 0).toString(),
+      );
       if (formData.sku) uploadData.append("sku", formData.sku);
       if (formData.barcode) uploadData.append("barcode", formData.barcode);
-      if (formData.vendorName) uploadData.append("vendorName", formData.vendorName);
+      if (formData.vendorName)
+        uploadData.append("vendorName", formData.vendorName);
       if (formData.category) uploadData.append("category", formData.category);
-      if (formData.themeTemplate) uploadData.append("themeTemplate", formData.themeTemplate);
-      if (formData.collectionName) uploadData.append("collectionIds", JSON.stringify([formData.collectionName]));
+      if (formData.themeTemplate)
+        uploadData.append("themeTemplate", formData.themeTemplate);
+      if (formData.collectionName)
+        uploadData.append(
+          "collectionIds",
+          JSON.stringify([formData.collectionName]),
+        );
       if (tags.length > 0) uploadData.append("tags", JSON.stringify(tags));
       uploadData.append("status", formData.status);
 
@@ -124,7 +153,8 @@ export default function NewProductPage() {
         uploadData.append("images", img.file);
       });
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/products`, {
         method: "POST",
         headers: {
@@ -148,9 +178,15 @@ export default function NewProductPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-7xl mx-auto space-y-6 pb-20 font-sans text-text-main">
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-7xl mx-auto space-y-6 pb-20 font-sans text-text-main"
+    >
       {/* Sticky Header Top Bar */}
-      <div className="flex items-center justify-between border-b border-border-main pb-4 sticky top-0 bg-[#F1F1F1]/95 backdrop-blur-md z-20">
+      <div
+        className="flex items-center justify-between border-b border-border-main pb-4 sticky bg-white/90 backdrop-blur-md z-20 -mx-8 -mt-8 px-8 pt-8"
+        style={{ top: "-32px" }}
+      >
         <div className="flex items-center space-x-3">
           <Link
             href="/dashboard/products"
@@ -160,11 +196,15 @@ export default function NewProductPage() {
           </Link>
           <div>
             <span className="text-xs text-text-muted">Products</span>
-            <h1 className="text-lg font-bold text-text-main leading-none">Add product</h1>
+            <h1 className="text-lg font-bold text-text-main leading-none">
+              Add product
+            </h1>
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-xs text-text-muted italic hidden md:inline">Unsaved product</span>
+          <span className="text-xs text-text-muted italic hidden md:inline">
+            Unsaved product
+          </span>
           <button
             type="button"
             onClick={() => router.back()}
@@ -194,10 +234,8 @@ export default function NewProductPage() {
 
       {/* Two-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Left Larger Column (Span 2) */}
         <div className="lg:col-span-2 space-y-6">
-          
           {/* Card 1: Title and Description */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
             <div className="space-y-1.5">
@@ -208,42 +246,82 @@ export default function NewProductPage() {
                 placeholder="Short sleeve t-shirt"
                 className="w-full px-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all bg-background"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-text-main">Description</label>
-              
+              <label className="text-sm font-bold text-text-main">
+                Description
+              </label>
+
               {/* Rich Text Editor Mock Toolbar */}
               <div className="flex flex-wrap items-center gap-1 p-2 bg-background border border-border-main border-b-0 rounded-t-lg text-text-muted">
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Bold">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Bold"
+                >
                   <Bold className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Italic">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Italic"
+                >
                   <Italic className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Underline">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Underline"
+                >
                   <Underline className="w-4 h-4" />
                 </button>
                 <div className="w-[1px] h-4 bg-zinc-300 mx-1" />
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Align Left">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Align Left"
+                >
                   <AlignLeft className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Align Center">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Align Center"
+                >
                   <AlignCenter className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Align Right">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Align Right"
+                >
                   <AlignRight className="w-4 h-4" />
                 </button>
                 <div className="w-[1px] h-4 bg-zinc-300 mx-1" />
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Add Link">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Add Link"
+                >
                   <Link2 className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Add Image">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Add Image"
+                >
                   <ImageIcon className="w-4 h-4" />
                 </button>
-                <button type="button" className="p-1.5 hover:bg-zinc-200 rounded transition-colors" title="Code block">
+                <button
+                  type="button"
+                  className="p-1.5 hover:bg-zinc-200 rounded transition-colors"
+                  title="Code block"
+                >
                   <Code className="w-4 h-4" />
                 </button>
               </div>
@@ -253,20 +331,31 @@ export default function NewProductPage() {
                 placeholder="Write something about this product..."
                 className="w-full px-4 py-3 border border-border-main rounded-b-lg text-sm focus:ring-2 focus:ring-zinc-950 outline-none transition-all bg-background resize-none"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
           </div>
 
           {/* Card 2: Media Upload */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">Media</h2>
-            
+            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">
+              Media
+            </h2>
+
             {uploadedImages.length > 0 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 pb-4">
                 {uploadedImages.map((img, idx) => (
-                  <div key={idx} className="relative aspect-square bg-background rounded-xl border border-border-main overflow-hidden group shadow-sm">
-                    <img src={img.previewUrl} alt="" className="h-full w-full object-cover" />
+                  <div
+                    key={idx}
+                    className="relative aspect-square bg-background rounded-xl border border-border-main overflow-hidden group shadow-sm"
+                  >
+                    <img
+                      src={img.previewUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                     <button
                       type="button"
                       onClick={() => removeImage(img.previewUrl)}
@@ -299,7 +388,9 @@ export default function NewProductPage() {
                 <span className="text-sm font-semibold text-text-main">
                   {uploading ? "Uploading images..." : "Upload new"}
                 </span>{" "}
-                <span className="text-sm text-text-muted">or drag and drop</span>
+                <span className="text-sm text-text-muted">
+                  or drag and drop
+                </span>
               </div>
               <p className="text-[11px] text-text-muted font-medium uppercase tracking-wider">
                 Accepts images or webp (max 5MB)
@@ -309,54 +400,85 @@ export default function NewProductPage() {
 
           {/* Card 3: Category */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">Category</h2>
+            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">
+              Category
+            </h2>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-muted uppercase">Product Category</label>
+              <label className="text-xs font-bold text-text-muted uppercase">
+                Product Category
+              </label>
               <select
-                className="w-full px-4 py-2 border border-border-main rounded-lg text-sm bg-background focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
+                className="w-full px-4 py-2 border border-border-main rounded-lg text-sm text-text-main bg-background focus:ring-2 focus:ring-zinc-950 outline-none transition-all"
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
               >
-                <option value="">Choose a product category</option>
-                <option value="T-Shirts">T-Shirts</option>
-                <option value="Hoodies">Hoodies</option>
-                <option value="Footwear">Footwear</option>
-                <option value="Accessories">Accessories</option>
-                <option value="Home & Living">Home & Living</option>
+                <option className="text-zinc-900 bg-white" value="">
+                  Choose a product category
+                </option>
+                {categoriesList.map((cat: any) => (
+                  <option
+                    className="text-zinc-900 bg-white"
+                    key={cat.id}
+                    value={cat.id}
+                  >
+                    {cat.name}
+                  </option>
+                ))}
               </select>
-              <p className="text-[11px] text-text-muted">Determines tax rates and search placement across sales channels.</p>
+              <p className="text-[11px] text-text-muted">
+                Determines tax rates and search placement across sales channels.
+              </p>
             </div>
           </div>
 
           {/* Card 4: Pricing */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">Pricing</h2>
+            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">
+              Pricing
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase">Price</label>
+                <label className="text-xs font-bold text-text-muted uppercase">
+                  Price
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-2 text-text-muted text-sm">$</span>
+                  <span className="absolute left-4 top-2 text-text-muted text-sm">
+                    $
+                  </span>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     className="w-full pl-8 pr-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 outline-none bg-background transition-all font-mono"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase">Compare-at price</label>
+                <label className="text-xs font-bold text-text-muted uppercase">
+                  Compare-at price
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-2 text-text-muted text-sm">$</span>
+                  <span className="absolute left-4 top-2 text-text-muted text-sm">
+                    $
+                  </span>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     className="w-full pl-8 pr-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 outline-none bg-background transition-all font-mono"
                     value={formData.compareAtPrice}
-                    onChange={(e) => setFormData({ ...formData, compareAtPrice: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        compareAtPrice: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -364,16 +486,22 @@ export default function NewProductPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase">Cost per item</label>
+                <label className="text-xs font-bold text-text-muted uppercase">
+                  Cost per item
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-2 text-text-muted text-sm">$</span>
+                  <span className="absolute left-4 top-2 text-text-muted text-sm">
+                    $
+                  </span>
                   <input
                     type="number"
                     step="0.01"
                     placeholder="0.00"
                     className="w-full pl-8 pr-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 outline-none bg-background transition-all font-mono"
                     value={formData.costPerItem}
-                    onChange={(e) => setFormData({ ...formData, costPerItem: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, costPerItem: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -384,7 +512,10 @@ export default function NewProductPage() {
                   defaultChecked
                   className="rounded border-border-main text-text-main focus:ring-zinc-900"
                 />
-                <label htmlFor="chargeTax" className="text-xs font-semibold text-zinc-600 cursor-pointer">
+                <label
+                  htmlFor="chargeTax"
+                  className="text-xs font-semibold text-zinc-600 cursor-pointer"
+                >
                   Charge tax on this product
                 </label>
               </div>
@@ -404,114 +535,135 @@ export default function NewProductPage() {
                 />
               </div>
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase">SKU (Stock Keeping Unit)</label>
+                <label className="text-xs font-bold text-text-muted uppercase">
+                  SKU (Stock Keeping Unit)
+                </label>
                 <input
                   type="text"
                   placeholder="TSH-001"
                   className="w-full px-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 bg-background outline-none transition-all"
                   value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sku: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase">Barcode (ISBN, UPC, GTIN)</label>
+                <label className="text-xs font-bold text-text-muted uppercase">
+                  Barcode (ISBN, UPC, GTIN)
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. 1901283894"
                   className="w-full px-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 bg-background outline-none transition-all"
                   value={formData.barcode}
-                  onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, barcode: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-1.5 max-w-[200px] pt-2">
-              <label className="text-xs font-bold text-text-muted uppercase">Quantity Available</label>
+              <label className="text-xs font-bold text-text-muted uppercase">
+                Quantity Available
+              </label>
               <input
                 type="number"
                 placeholder="0"
                 className="w-full px-4 py-2 border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 bg-background outline-none transition-all font-mono"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, quantity: e.target.value })
+                }
               />
             </div>
           </div>
-
         </div>
 
         {/* Right Sidebar Column (Span 1) */}
         <div className="space-y-6">
-          
           {/* Sidebar Widget 1: Status */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-text-main">Status</h2>
             <div className="space-y-2">
               <select
-                className="w-full px-3 py-2 border border-border-main rounded-lg text-sm bg-background focus:ring-2 focus:ring-zinc-950 outline-none font-medium"
+                className="w-full px-3 py-2 border border-border-main rounded-lg text-sm text-text-main bg-background focus:ring-2 focus:ring-zinc-950 outline-none font-medium"
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
               >
-                <option value="ACTIVE">Active</option>
-                <option value="DRAFT">Draft</option>
-                <option value="ARCHIVED">Archived</option>
+                <option className="text-zinc-900 bg-white" value="ACTIVE">
+                  Active
+                </option>
+                <option className="text-zinc-900 bg-white" value="DRAFT">
+                  Draft
+                </option>
+                <option className="text-zinc-900 bg-white" value="ARCHIVED">
+                  Archived
+                </option>
               </select>
-              <p className="text-[11px] text-text-muted">Draft products will be hidden from the storefront catalogue.</p>
-            </div>
-          </div>
-
-          {/* Sidebar Widget 2: Publishing */}
-          <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-3">
-            <h2 className="text-sm font-bold text-text-main flex items-center justify-between">
-              <span>Publishing</span>
-            </h2>
-            <div className="space-y-2 pt-1 border-t border-border-main text-xs font-semibold text-zinc-600">
-              <div className="flex items-center justify-between">
-                <span>Online Store</span>
-                <span className="h-2 w-2 rounded-full bg-zinc-500"></span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Point of Sale</span>
-                <span className="h-2 w-2 rounded-full bg-zinc-500"></span>
-              </div>
+              <p className="text-[11px] text-text-muted">
+                Draft products will be hidden from the storefront catalogue.
+              </p>
             </div>
           </div>
 
           {/* Sidebar Widget 3: Organization & Collections */}
           <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">Product organization</h2>
-            
+            <h2 className="text-sm font-bold text-text-main pb-2 border-b border-border-main">
+              Product organization
+            </h2>
+
             <div className="space-y-4">
               {/* Vendor */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wide">Vendor</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wide">
+                  Vendor
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. glamnow453"
                   className="w-full px-4 py-2 border border-border-main rounded-lg text-sm bg-background focus:ring-2 focus:ring-zinc-950 outline-none"
                   value={formData.vendorName}
-                  onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, vendorName: e.target.value })
+                  }
                 />
               </div>
 
               {/* Collections */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-muted uppercase tracking-wide">Collections</label>
+                <label className="text-xs font-bold text-text-muted uppercase tracking-wide">
+                  Collections
+                </label>
                 <select
-                  className="w-full px-4 py-2 border border-border-main rounded-lg text-sm bg-background focus:ring-2 focus:ring-zinc-950 outline-none"
+                  className="w-full px-4 py-2 border border-border-main rounded-lg text-sm text-text-main bg-background focus:ring-2 focus:ring-zinc-950 outline-none"
                   value={formData.collectionName}
-                  onChange={(e) => setFormData({ ...formData, collectionName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, collectionName: e.target.value })
+                  }
                 >
-                  <option value="">Select a collection</option>
+                  <option className="text-zinc-900 bg-white" value="">
+                    Select a collection
+                  </option>
                   {collectionsList.map((col: Collection) => (
-                    <option key={col.id} value={col.id}>
+                    <option
+                      className="text-zinc-900 bg-white"
+                      key={col.id}
+                      value={col.id}
+                    >
                       {col.title}
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-text-muted font-medium">Add this product to a collection to organize your shop.</p>
+                <p className="text-[10px] text-text-muted font-medium">
+                  Add this product to a collection to organize your shop.
+                </p>
               </div>
 
               {/* Tags */}
@@ -527,7 +679,9 @@ export default function NewProductPage() {
                     className="flex-1 px-4 py-2 border border-border-main rounded-lg text-sm bg-background focus:ring-2 focus:ring-zinc-950 outline-none"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addTag())
+                    }
                   />
                   <button
                     type="button"
@@ -560,29 +714,14 @@ export default function NewProductPage() {
             </div>
           </div>
 
-          {/* Sidebar Widget 4: Theme Template */}
-          <div className="bg-surface p-6 rounded-xl border border-border-main shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-text-main">Theme template</h2>
-            <div className="space-y-1.5">
-              <select 
-                className="w-full px-3 py-2 border border-border-main bg-background rounded-lg text-sm focus:ring-2 focus:ring-zinc-950 font-medium"
-                value={formData.themeTemplate}
-                onChange={(e) => setFormData({ ...formData, themeTemplate: e.target.value })}
-              >
-                <option value="Default product">Default product</option>
-              </select>
-            </div>
-          </div>
-
           <div className="bg-background border border-border-main p-4 rounded-xl flex items-start space-x-3">
             <Info className="h-5 w-5 text-zinc-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-text-muted leading-relaxed">
-              Adding collections and rich content boosts your e-commerce search visibility.
+              Adding collections and rich content boosts your e-commerce search
+              visibility.
             </p>
           </div>
-
         </div>
-
       </div>
     </form>
   );

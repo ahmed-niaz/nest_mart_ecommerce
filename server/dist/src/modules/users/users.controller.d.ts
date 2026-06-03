@@ -12,6 +12,10 @@ export declare class UsersController {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;
@@ -24,6 +28,10 @@ export declare class UsersController {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;
@@ -36,6 +44,10 @@ export declare class UsersController {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null)[]>;
@@ -48,6 +60,10 @@ export declare class UsersController {
         avatar: any;
         role: any;
         isActive: any;
+        isVerified: any;
+        address: any;
+        city: any;
+        postalCode: any;
         createdAt: any;
         updatedAt: any;
     } | null>;

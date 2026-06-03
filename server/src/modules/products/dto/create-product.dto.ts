@@ -69,11 +69,13 @@ export class CreateProductDto {
   collectionIds?: string[];
 
   // Flat fields for single variant creation
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @IsOptional()
   price?: number;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @IsOptional()
@@ -86,6 +88,30 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   barcode?: string;
+
+  @IsString()
+  @IsOptional()
+  vendorName?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsString()
+  @IsOptional()
+  themeTemplate?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  })
+  tags?: string[];
 
   @IsArray()
   @ValidateNested({ each: true })

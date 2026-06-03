@@ -1,29 +1,43 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/auth-context';
-import { loadGoogleSdk, googleSdkJs } from '@/lib/google-sdk';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useAuth } from "@/lib/auth-context";
+import { loadGoogleSdk, googleSdkJs } from "@/lib/google-sdk";
 
-const registerSchema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters').optional(),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters').optional(),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    firstName: z
+      .string()
+      .min(2, "First name must be at least 2 characters")
+      .optional(),
+    lastName: z
+      .string()
+      .min(2, "Last name must be at least 2 characters")
+      .optional(),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -49,10 +63,17 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setError(null);
-      await registerUser(data.email, data.password, data.firstName, data.lastName);
-      router.push('/');
+      await registerUser(
+        data.email,
+        data.password,
+        data.firstName,
+        data.lastName,
+      );
+      router.push("/");
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 'Registration failed. Please try again.';
+      const errorMessage =
+        err?.response?.data?.message ||
+        "Registration failed. Please try again.";
       setError(errorMessage);
     }
   };
@@ -62,11 +83,11 @@ export default function RegisterPage() {
     googleSdkJs()
       .then(async (accessToken) => {
         await googleLogin(accessToken);
-        router.push('/');
+        router.push("/");
       })
       .catch((err: any) => {
-        console.error('Google login error:', err);
-        setError(err?.message || 'Google login failed. Please try again.');
+        console.error("Google login error:", err);
+        setError(err?.message || "Google login failed. Please try again.");
         setIsGoogleLoading(false);
       });
   };
@@ -80,7 +101,9 @@ export default function RegisterPage() {
               <span className="text-white font-bold text-2xl">N</span>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-text-main">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-text-main">
+            Create Account
+          </CardTitle>
           <CardDescription>Join NestMart for fresh groceries</CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,42 +113,64 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-gray-700">First Name</Label>
+                <Label htmlFor="firstName" className="text-gray-700">
+                  First Name
+                </Label>
                 <Input
                   id="firstName"
                   placeholder="John"
-                  {...register('firstName')}
-                  className={errors.firstName ? 'border-red-500 focus:ring-red-500' : 'focus:ring-orange-500'}
+                  {...register("firstName")}
+                  className={
+                    errors.firstName
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-orange-500"
+                  }
                 />
                 {errors.firstName && (
-                  <p className="text-sm text-red-500">{errors.firstName.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.firstName.message}
+                  </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-gray-700">Last Name</Label>
+                <Label htmlFor="lastName" className="text-gray-700">
+                  Last Name
+                </Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  {...register('lastName')}
-                  className={errors.lastName ? 'border-red-500 focus:ring-red-500' : 'focus:ring-orange-500'}
+                  {...register("lastName")}
+                  className={
+                    errors.lastName
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-orange-500"
+                  }
                 />
                 {errors.lastName && (
-                  <p className="text-sm text-red-500">{errors.lastName.message}</p>
+                  <p className="text-sm text-red-500">
+                    {errors.lastName.message}
+                  </p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">Email</Label>
+              <Label htmlFor="email" className="text-gray-700">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="your@email.com"
-                {...register('email')}
-                className={errors.email ? 'border-red-500 focus:ring-red-500' : 'focus:ring-orange-500'}
+                {...register("email")}
+                className={
+                  errors.email
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-orange-500"
+                }
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -133,14 +178,20 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">Password</Label>
+              <Label htmlFor="password" className="text-gray-700">
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
-                  {...register('password')}
-                  className={errors.password ? 'border-red-500 pr-10 focus:ring-red-500' : 'pr-10 focus:ring-orange-500'}
+                  {...register("password")}
+                  className={
+                    errors.password
+                      ? "border-red-500 pr-10 focus:ring-red-500"
+                      : "pr-10 focus:ring-orange-500"
+                  }
                 />
                 <button
                   type="button"
@@ -151,31 +202,43 @@ export default function RegisterPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-gray-700">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-700">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'focus:ring-orange-500'}
+                {...register("confirmPassword")}
+                className={
+                  errors.confirmPassword
+                    ? "border-red-500 focus:ring-red-500"
+                    : "focus:ring-orange-500"
+                }
               />
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2" 
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSubmitting ? 'Creating account...' : 'Create Account'}
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {isSubmitting ? "Creating account..." : "Create Account"}
             </Button>
           </form>
 
@@ -184,7 +247,9 @@ export default function RegisterPage() {
               <div className="w-full border-t border-border-main"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-surface text-text-muted">Or continue with</span>
+              <span className="px-4 bg-surface text-text-muted">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -221,8 +286,11 @@ export default function RegisterPage() {
           </Button>
 
           <p className="text-center text-sm text-gray-600 mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:text-primary-hover font-medium hover:underline">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-primary hover:text-primary-hover font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>

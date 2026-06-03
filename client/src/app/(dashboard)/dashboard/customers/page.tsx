@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, Filter, Mail, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Users,
+  Search,
+  Filter,
+  Mail,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import Cookies from "js-cookie";
 
 interface Customer {
@@ -23,7 +31,8 @@ export default function CustomersPage() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
         const res = await fetch(`${baseUrl}/users`, {
           headers: {
             Authorization: `Bearer ${Cookies.get("accessToken")}`,
@@ -33,7 +42,9 @@ export default function CustomersPage() {
         if (data.success) {
           // Filter out SUPER_ADMIN or ADMIN if we only want customers,
           // but usually the customers page lists all store users.
-          setCustomers(data.data.filter((u: Customer) => u.role === 'CUSTOMER'));
+          setCustomers(
+            data.data.filter((u: Customer) => u.role === "CUSTOMER"),
+          );
         }
       } catch (err) {
         console.error("Failed to fetch customers:", err);
@@ -44,9 +55,12 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  const filteredCustomers = customers.filter((c) =>
-    (c.firstName + " " + c.lastName).toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCustomers = customers.filter(
+    (c) =>
+      (c.firstName + " " + c.lastName)
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -54,7 +68,9 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-main">Customers</h1>
-          <p className="text-text-muted text-sm">Manage your registered customers and view their details.</p>
+          <p className="text-text-muted text-sm">
+            Manage your registered customers and view their details.
+          </p>
         </div>
       </div>
 
@@ -102,20 +118,29 @@ export default function CustomersPage() {
                 <td className="px-6 py-20 text-center" colSpan={5}>
                   <div className="flex flex-col items-center justify-center space-y-3 opacity-30">
                     <Users className="h-12 w-12 text-text-muted" />
-                    <p className="font-medium text-zinc-600">No customers found</p>
+                    <p className="font-medium text-zinc-600">
+                      No customers found
+                    </p>
                   </div>
                 </td>
               </tr>
             ) : (
               filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-zinc-50 transition-colors">
+                <tr
+                  key={customer.id}
+                  className="hover:bg-zinc-50 transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="h-8 w-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-xs">
-                        {(customer.firstName?.[0] || customer.email[0]).toUpperCase()}
+                        {(
+                          customer.firstName?.[0] || customer.email[0]
+                        ).toUpperCase()}
                       </div>
                       <p className="text-sm font-bold text-text-main">
-                        {customer.firstName ? `${customer.firstName} ${customer.lastName || ''}` : 'No Name Provided'}
+                        {customer.firstName
+                          ? `${customer.firstName} ${customer.lastName || ""}`
+                          : "No Name Provided"}
                       </p>
                     </div>
                   </td>
@@ -126,7 +151,7 @@ export default function CustomersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-zinc-600">
-                    {customer.phone || '—'}
+                    {customer.phone || "—"}
                   </td>
                   <td className="px-6 py-4">
                     {customer.isVerified ? (
@@ -144,7 +169,9 @@ export default function CustomersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2 text-sm text-text-muted">
                       <Calendar className="h-3 w-3" />
-                      <span>{new Date(customer.createdAt).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(customer.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </td>
                 </tr>

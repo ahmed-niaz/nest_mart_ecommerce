@@ -19,6 +19,10 @@ export declare class CreateProductDto {
     quantity?: number;
     sku?: string;
     barcode?: string;
+    vendorName?: string;
+    category?: string;
+    themeTemplate?: string;
+    tags?: string[];
     variants?: CreateProductVariantDto[];
     images?: any[];
 }

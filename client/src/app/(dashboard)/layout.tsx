@@ -18,6 +18,8 @@ import {
   LogOut,
   User as UserIcon,
   ChevronRight,
+  FolderOpen,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -30,8 +32,8 @@ const sidebarLinks = [
     href: "/dashboard/products",
     icon: Package,
     subItems: [
-      { label: "Collections", href: "/dashboard/collections" },
-      { label: "Inventory", href: "/dashboard/inventory" },
+      { label: "Categories", href: "/dashboard/categories", icon: FolderOpen },
+      { label: "Inventory", href: "/dashboard/inventory", icon: ClipboardList },
     ],
   },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
@@ -50,19 +52,23 @@ export default function DashboardLayout({
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex h-screen bg-[#F1F1F1] font-sans">
+    <div className="flex h-screen bg-surface-secondary font-sans p-4 gap-4">
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-[#1A1A1A] text-white transition-all duration-300 flex flex-col",
-          isSidebarOpen ? "w-64" : "w-20"
+          "bg-white/80 backdrop-blur-md border border-border-main rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all duration-300 flex flex-col overflow-hidden",
+          isSidebarOpen ? "w-64" : "w-20",
         )}
       >
         {/* Logo Section */}
-        <div className="h-16 flex items-center px-6 border-b border-white/10">
-          <Store className="h-6 w-6 text-zinc-100" />
+        <div className="h-16 flex items-center px-5 border-b border-border-main/60 bg-gradient-to-b from-white/40 to-transparent">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
+            <Store className="h-4 w-4 text-white" />
+          </div>
           {isSidebarOpen && (
-            <span className="ml-3 font-bold text-lg tracking-tight">NestMart</span>
+            <span className="ml-3 font-bold text-sm tracking-tight bg-gradient-to-r from-text-main to-text-secondary bg-clip-text text-transparent truncate">
+              NestMart Admin
+            </span>
           )}
         </div>
 
@@ -72,52 +78,72 @@ export default function DashboardLayout({
             const isActive =
               pathname === link.href ||
               (link.subItems && pathname.startsWith(link.href)) ||
-              (link.subItems && link.subItems.some((sub) => pathname.startsWith(sub.href)));
+              (link.subItems &&
+                link.subItems.some((sub) => pathname.startsWith(sub.href)));
 
             return (
               <div key={link.href} className="space-y-1">
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex items-center px-3 py-2 rounded-lg transition-colors group",
+                    "flex items-center px-3.5 py-2.5 rounded-xl transition-all duration-200 group relative",
                     isActive
-                      ? "bg-white/10 text-white font-semibold"
-                      : "text-text-muted hover:bg-white/5 hover:text-white"
+                      ? "bg-gradient-to-r from-primary/10 to-transparent text-primary font-semibold"
+                      : "text-text-secondary hover:bg-surface-secondary hover:text-text-main",
                   )}
                 >
+                  {/* Active Indicator Line */}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
+                  )}
                   <link.icon
                     className={cn(
-                      "h-5 w-5 flex-shrink-0",
-                      isActive ? "text-white" : "group-hover:text-white"
+                      "h-[18px] w-[18px] flex-shrink-0 transition-transform duration-200 group-hover:scale-105",
+                      isActive
+                        ? "text-primary"
+                        : "text-text-muted group-hover:text-text-main",
                     )}
                   />
                   {isSidebarOpen && (
-                    <span className="ml-3 text-sm font-medium">{link.label}</span>
+                    <span className="ml-3 text-sm font-medium tracking-tight">
+                      {link.label}
+                    </span>
                   )}
                   {isSidebarOpen && link.subItems && (
                     <ChevronRight
                       className={cn(
                         "ml-auto h-4 w-4 text-text-muted transition-transform duration-200",
-                        isActive && "rotate-90"
+                        isActive && "rotate-90 text-primary",
                       )}
                     />
                   )}
                 </Link>
                 {isSidebarOpen && link.subItems && isActive && (
-                  <div className="pl-9 space-y-1 border-l border-white/10 ml-5">
+                  <div className="pl-4 space-y-1 border-l border-border-main/60 ml-5.5 py-1">
                     {link.subItems.map((sub) => {
                       const isSubActive = pathname === sub.href;
+                      const SubIcon = sub.icon;
                       return (
                         <Link
                           key={sub.href}
                           href={sub.href}
                           className={cn(
-                            "block px-3 py-1.5 rounded-md text-[13px] transition-colors",
+                            "flex items-center px-3 py-1.5 rounded-lg text-[13px] transition-all duration-150 group/sub",
                             isSubActive
-                              ? "bg-white/5 text-white font-semibold"
-                              : "text-text-muted hover:text-white hover:bg-white/5"
+                              ? "bg-primary/5 text-primary font-semibold"
+                              : "text-text-secondary hover:text-text-main hover:bg-surface-secondary",
                           )}
                         >
+                          {SubIcon && (
+                            <SubIcon
+                              className={cn(
+                                "h-3.5 w-3.5 mr-2 shrink-0 transition-transform duration-150 group-hover/sub:scale-105",
+                                isSubActive
+                                  ? "text-primary"
+                                  : "text-text-muted group-hover/sub:text-text-main",
+                              )}
+                            />
+                          )}
                           {sub.label}
                         </Link>
                       );
@@ -130,59 +156,69 @@ export default function DashboardLayout({
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-3 border-t border-white/10">
+        <div className="p-3 border-t border-border-main/60">
           <Link
             href="/dashboard/settings"
-            className="flex items-center px-3 py-2 text-text-muted hover:text-white rounded-lg hover:bg-white/5"
+            className="flex items-center px-3.5 py-2.5 text-text-secondary hover:text-text-main rounded-xl hover:bg-surface-secondary"
           >
-            <Settings className="h-5 w-5" />
-            {isSidebarOpen && <span className="ml-3 text-sm font-medium">Settings</span>}
+            <Settings className="h-[18px] w-[18px] text-text-muted" />
+            {isSidebarOpen && (
+              <span className="ml-3 text-sm font-medium tracking-tight">
+                Settings
+              </span>
+            )}
           </Link>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-white border border-border-main rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
         {/* Header */}
-        <header className="h-16 bg-surface border-b border-border-main flex items-center justify-between px-8 shadow-sm relative z-10">
-          <div className="flex items-center flex-1 max-w-xl relative">
-            <Search className="absolute left-3 h-4 w-4 text-text-muted" />
+        <header className="h-16 bg-white border-b border-border-main/60 flex items-center justify-between px-8 relative z-10">
+          <div className="flex items-center flex-1 max-w-md relative group">
+            <Search className="absolute left-3.5 h-4 w-4 text-text-muted transition-colors group-focus-within:text-primary" />
             <input
               type="text"
               placeholder="Search anything..."
-              className="w-full pl-10 pr-4 py-2 bg-background border-none rounded-lg text-sm focus:ring-2 focus:ring-zinc-900 transition-all outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-surface-secondary border border-border-light rounded-xl text-sm focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all outline-none"
             />
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-text-muted hover:bg-zinc-100 rounded-full relative">
+            <button className="p-2 text-text-muted hover:text-text-main hover:bg-surface-secondary rounded-xl relative transition-all">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
             </button>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs shadow-sm hover:bg-primary-hover transition-colors focus:outline-none"
+                className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-emerald-400 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all focus:outline-none"
               >
-                {user?.firstName ? user.firstName[0].toUpperCase() : 'U'}
+                {user?.firstName ? user.firstName[0].toUpperCase() : "U"}
               </button>
-              
+
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-surface rounded-xl shadow-lg border border-border-main overflow-hidden py-1 z-50">
-                  <div className="px-4 py-3 border-b border-border-main">
-                    <p className="text-sm font-bold text-text-main">{user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Store User'}</p>
-                    <p className="text-xs text-text-muted truncate">{user?.email}</p>
-                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-background text-zinc-700 uppercase tracking-widest">
-                      {user?.role?.replace('_', ' ') || 'CUSTOMER'}
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-border-main overflow-hidden py-1 z-50 animate-slide-down">
+                  <div className="px-4 py-3 border-b border-border-main/60">
+                    <p className="text-sm font-bold text-text-main">
+                      {user?.firstName
+                        ? `${user.firstName} ${user.lastName || ""}`
+                        : "Store User"}
+                    </p>
+                    <p className="text-xs text-text-muted truncate mt-0.5">
+                      {user?.email}
+                    </p>
+                    <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-surface-secondary text-zinc-700 uppercase tracking-widest">
+                      {user?.role?.replace("_", " ") || "CUSTOMER"}
                     </div>
                   </div>
-                  
+
                   <div className="py-1">
                     <a
                       href="http://localhost:3000"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+                      className="flex items-center px-4 py-2 text-sm text-text-secondary hover:bg-surface-secondary hover:text-text-main transition-colors"
                     >
                       <ExternalLink className="h-4 w-4 mr-3 text-text-muted" />
                       Preview Store
@@ -202,7 +238,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white">
           {children}
         </main>
       </div>

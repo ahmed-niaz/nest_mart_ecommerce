@@ -47,6 +47,9 @@ let AuthController = class AuthController {
     async refreshTokens(userId) {
         return this.authService.refreshTokens(userId);
     }
+    logout() {
+        return { success: true, message: 'Logged out successfully' };
+    }
     async getProfile(userId) {
         return this.authService.getProfile(userId);
     }
@@ -105,6 +108,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refreshTokens", null);
+__decorate([
+    Post('logout'),
+    HttpCode(HttpStatus.OK),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "logout", null);
 __decorate([
     Get('me'),
     __param(0, CurrentUser('id')),

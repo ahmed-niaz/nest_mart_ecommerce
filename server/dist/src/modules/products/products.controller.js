@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles, } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFiles, Query, } from '@nestjs/common';
 import { AnyFilesInterceptor, FilesInterceptor, } from '@nestjs/platform-express';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
@@ -28,8 +28,8 @@ let ProductsController = class ProductsController {
     create(createProductDto, files) {
         return this.productsService.create(createProductDto, files);
     }
-    findAll() {
-        return this.productsService.findAll();
+    findAll(category, collection, search, sort, page, limit, pagination) {
+        return this.productsService.findAll(category || collection, search, sort, page, limit, pagination === 'true');
     }
     findOne(id) {
         return this.productsService.findOne(id);
@@ -55,8 +55,15 @@ __decorate([
 __decorate([
     Get(),
     Public(),
+    __param(0, Query('category')),
+    __param(1, Query('collection')),
+    __param(2, Query('search')),
+    __param(3, Query('sort')),
+    __param(4, Query('page')),
+    __param(5, Query('limit')),
+    __param(6, Query('_pagination')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAll", null);
 __decorate([

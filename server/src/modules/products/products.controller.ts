@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import {
   AnyFilesInterceptor,
@@ -40,8 +41,23 @@ export class ProductsController {
 
   @Get()
   @Public()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(
+    @Query('category') category?: string,
+    @Query('collection') collection?: string,
+    @Query('search') search?: string,
+    @Query('sort') sort?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('_pagination') pagination?: string,
+  ) {
+    return this.productsService.findAll(
+      category || collection,
+      search,
+      sort,
+      page,
+      limit,
+      pagination === 'true',
+    );
   }
 
   @Get(':id')
