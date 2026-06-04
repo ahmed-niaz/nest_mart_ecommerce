@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api";
 import {
   User,
   Mail,
@@ -14,14 +15,20 @@ import {
   Building,
   Hash,
   XCircle,
+  X,
 } from "lucide-react";
-import Cookies from "js-cookie";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
-  const token = Cookies.get("accessToken");
+  const { user, checkAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Toast notifications state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -35,7 +42,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -49,30 +55,39 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Auto-hide toast after 4 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-      const res = await fetch(`${baseUrl}/users/me`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
+      const res = await api.patch("/users/me", formData);
+      const data = res.data;
       if (data.success) {
         setSuccess(true);
-        // Profile update successful - context will refresh on reload or manual re-fetch
+        await checkAuth(); // Refresh the user object across the application header/navbar
+        setToastType("success");
+        setToastMessage("Your profile information has been successfully updated.");
+        setShowToast(true);
+      } else {
+        throw new Error(data.message || "Failed to update profile.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
+      const msg = error.response?.data?.message || error.message || "Failed to update profile. Please try again.";
+      setToastType("error");
+      setToastMessage(msg);
+      setShowToast(true);
     } finally {
       setLoading(false);
     }
@@ -82,26 +97,37 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploadingImage(true);
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const uploadData = new FormData();
       uploadData.append("file", file);
 
-      const res = await fetch(`${baseUrl}/uploads/image`, {
-        method: "POST",
+      const res = await api.post("/uploads/image", uploadData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
-        body: uploadData,
       });
 
-      const data = await res.json();
-      if (data.url) {
-        setFormData({ ...formData, avatar: data.url });
+      const data = res.data;
+      
+      // Resolve wrapped or direct response
+      const resolvedData = data.data || data;
+      if (resolvedData && resolvedData.url) {
+        setFormData((prev) => ({ ...prev, avatar: resolvedData.url }));
+        setToastType("success");
+        setToastMessage("Profile picture uploaded successfully. Don't forget to save changes!");
+        setShowToast(true);
+      } else {
+        throw new Error(data.message || "Failed to upload profile picture.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error);
+      const msg = error.response?.data?.message || error.message || "Failed to upload image. Please try again.";
+      setToastType("error");
+      setToastMessage(msg);
+      setShowToast(true);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -109,12 +135,44 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
+      {/* Toast Alert Popup */}
+      {showToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-border-main shadow-2xl rounded-2xl p-4 flex items-center space-x-3 animate-slide-down max-w-md w-[90%] md:w-full">
+          {toastType === "success" ? (
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-full shrink-0">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+          ) : (
+            <div className="p-2 bg-red-100 text-red-600 rounded-full shrink-0">
+              <XCircle className="h-5 w-5" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-text-main">
+              {toastType === "success" ? "Success" : "Error"}
+            </p>
+            <p className="text-xs text-text-muted mt-0.5 break-words">{toastMessage}</p>
+          </div>
+          <button
+            onClick={() => setShowToast(false)}
+            className="p-1 hover:bg-zinc-100 rounded-lg text-text-muted hover:text-zinc-600 shrink-0 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       <div className="bg-surface rounded-2xl shadow-xl border border-border-main overflow-hidden">
         {/* Profile Header */}
         <div className="h-32 bg-gradient-to-r from-zinc-800 to-zinc-900 relative">
           <div className="absolute -bottom-16 left-12">
             <div className="relative group">
-              <div className="h-32 w-32 rounded-full bg-surface border-4 border-white shadow-lg overflow-hidden">
+              <div className="h-32 w-32 rounded-full bg-surface border-4 border-white shadow-lg overflow-hidden relative">
+                {uploadingImage && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white z-10">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                )}
                 {formData.avatar ? (
                   <img
                     src={formData.avatar}
@@ -127,13 +185,14 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-              <label className="absolute bottom-1 right-1 p-2 bg-surface rounded-full shadow-md border border-border-main hover:bg-zinc-50 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 cursor-pointer">
+              <label className="absolute bottom-1 right-1 p-2 bg-surface rounded-full shadow-md border border-border-main hover:bg-zinc-50 transition-all opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 cursor-pointer z-20">
                 <Camera className="h-4 w-4 text-zinc-600" />
                 <input
                   type="file"
                   className="hidden"
                   accept="image/*"
                   onChange={handleImageUpload}
+                  disabled={uploadingImage}
                 />
               </label>
             </div>
@@ -148,7 +207,7 @@ export default function ProfilePage() {
                   Account Settings
                 </h1>
                 {user.isVerified ? (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-widest">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-widest animate-pulse">
                     <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                     Verified
                   </span>
@@ -310,8 +369,8 @@ export default function ProfilePage() {
             <div className="md:col-span-2 pt-6 border-t border-border-main mt-4 flex justify-end">
               <button
                 type="submit"
-                disabled={loading}
-                className="flex items-center space-x-2 px-10 py-3 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-hover transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+                disabled={loading || uploadingImage}
+                className="flex items-center space-x-2 px-10 py-3 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-hover transition-all shadow-lg hover:shadow-xl disabled:opacity-50 cursor-pointer"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

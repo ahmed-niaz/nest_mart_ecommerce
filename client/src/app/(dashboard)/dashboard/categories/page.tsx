@@ -203,6 +203,7 @@ export default function CategoriesPage() {
             <tr className="bg-background border-b border-border-main text-text-muted uppercase text-[10px] font-bold tracking-widest">
               <th className="px-6 py-4">Image</th>
               <th className="px-6 py-4">Category Name</th>
+              <th className="px-6 py-4">Products</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4">Actions</th>
             </tr>
@@ -211,14 +212,14 @@ export default function CategoriesPage() {
             {loading ? (
               [...Array(3)].map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td className="px-6 py-6" colSpan={4}>
+                  <td className="px-6 py-6" colSpan={5}>
                     <div className="h-8 bg-background rounded"></div>
                   </td>
                 </tr>
               ))
             ) : filteredCategories.length === 0 ? (
               <tr>
-                <td className="px-6 py-20 text-center" colSpan={4}>
+                <td className="px-6 py-20 text-center" colSpan={5}>
                   <div className="flex flex-col items-center justify-center space-y-3 opacity-30">
                     <FolderOpen className="h-12 w-12 text-text-muted" />
                     <p className="font-medium text-zinc-600">
@@ -252,6 +253,11 @@ export default function CategoriesPage() {
                     </p>
                     <p className="text-xs text-text-muted mt-1">
                       /{category.slug}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-semibold text-text-main">
+                      {category.productCount ?? 0}
                     </p>
                   </td>
                   <td className="px-6 py-4">

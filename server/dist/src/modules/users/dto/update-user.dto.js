@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString, Matches, ValidateIf } from 'class-validator';
 export class UpdateUserDto {
     firstName;
     lastName;
@@ -31,7 +31,8 @@ __decorate([
 __decorate([
     IsString(),
     IsOptional(),
-    Matches(/^\+?[1-9]\d{1,14}$/, {
+    ValidateIf((o) => o.phone && o.phone !== ''),
+    Matches(/^\+?[0-9]\d{1,14}$/, {
         message: 'Please provide a valid phone number',
     }),
     __metadata("design:type", String)

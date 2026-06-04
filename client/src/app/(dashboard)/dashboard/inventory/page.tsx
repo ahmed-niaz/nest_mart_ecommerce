@@ -14,6 +14,9 @@ import {
   ArrowUp,
   ArrowDown,
   Edit2,
+  SlidersHorizontal,
+  CheckCircle,
+  HelpCircle,
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -93,11 +96,19 @@ const MOVEMENT_TYPES: MovementType[] = [
 
 export default function InventoryPage() {
   const [lowStock, setLowStock] = useState<Variant[]>([]);
+  const [allVariants, setAllVariants] = useState<Variant[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  
+  // Search & Filter state
+  const [stockSearch, setStockSearch] = useState("");
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [activeTab, setActiveTab] = useState<"stock" | "log">("stock");
+
+  // Movement Log search & filter
+  const [logSearch, setLogSearch] = useState("");
+  const [logTypeFilter, setLogTypeFilter] = useState<string>("ALL");
 
   // Adjust stock modal
   const [adjustTarget, setAdjustTarget] = useState<Variant | null>(null);
@@ -117,19 +128,29 @@ export default function InventoryPage() {
     setError("");
     try {
       const headers = getAuthHeaders();
-      const [lsRes, mvRes] = await Promise.all([
+      const [lsRes, mvRes, avRes] = await Promise.all([
         fetch(`${BASE_URL}/inventory/low-stock`, { headers }),
         fetch(`${BASE_URL}/inventory/movements`, { headers }),
+        fetch(`${BASE_URL}/inventory/variants`, { headers }),
       ]);
-      if (!lsRes.ok)
+      if (!lsRes.ok || !avRes.ok) {
         throw new Error(
-          "Failed to fetch inventory data. Make sure you are logged in as admin.",
+          "Failed to fetch inventory data. Make sure you are logged in as admin."
         );
-      const [lsData, mvData] = await Promise.all([lsRes.json(), mvRes.json()]);
+      }
+      const [lsData, mvData, avData] = await Promise.all([
+        lsRes.json(),
+        mvRes.json(),
+        avRes.json(),
+      ]);
+      
       const resolvedLowStock = lsData?.success ? lsData.data : lsData;
       const resolvedMovements = mvData?.success ? mvData.data : mvData;
+      const resolvedAllVariants = avData?.success ? avData.data : avData;
+
       setLowStock(Array.isArray(resolvedLowStock) ? resolvedLowStock : []);
       setMovements(Array.isArray(resolvedMovements) ? resolvedMovements : []);
+      setAllVariants(Array.isArray(resolvedAllVariants) ? resolvedAllVariants : []);
     } catch (err: any) {
       setError(err.message || "Failed to load inventory.");
     } finally {
@@ -181,7 +202,7 @@ export default function InventoryPage() {
           method: "PATCH",
           headers: getAuthHeaders(),
           body: JSON.stringify({ lowStockThreshold: parseInt(newThreshold) }),
-        },
+        }
       );
       if (!res.ok) throw new Error("Failed to update threshold.");
       setThresholdTarget(null);
@@ -193,14 +214,31 @@ export default function InventoryPage() {
     }
   };
 
+  // Stock filtering
+  const filteredVariants = allVariants.filter((variant) => {
+    const matchesSearch =
+      variant.product?.name?.toLowerCase().includes(stockSearch.toLowerCase()) ||
+      variant.sku?.toLowerCase().includes(stockSearch.toLowerCase());
+    
+    const isLow = variant.stock <= variant.lowStockThreshold;
+
+    if (showLowStockOnly) {
+      return matchesSearch && isLow;
+    }
+    return matchesSearch;
+  });
+
+  // Movement filtering
   const filteredMovements = movements.filter((m) => {
-    const q = search.toLowerCase();
-    return (
+    const q = logSearch.toLowerCase();
+    const matchesSearch =
       m.variant?.product?.name?.toLowerCase().includes(q) ||
       m.variant?.sku?.toLowerCase().includes(q) ||
-      m.type.toLowerCase().includes(q) ||
-      m.notes?.toLowerCase().includes(q)
-    );
+      m.notes?.toLowerCase().includes(q);
+
+    const matchesType = logTypeFilter === "ALL" || m.type === logTypeFilter;
+
+    return matchesSearch && matchesType;
   });
 
   if (loading) {
@@ -239,7 +277,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-main">Inventory</h1>
           <p className="text-text-muted text-sm mt-1">
-            Manage stock levels and track movements
+            Manage stock levels, thresholds, and track movements across all products.
           </p>
         </div>
         <button
@@ -308,11 +346,13 @@ export default function InventoryPage() {
             </p>
             <p className="text-xs text-red-600 mt-0.5">
               {lowStock
+                .slice(0, 5)
                 .map(
                   (v) =>
-                    `${v.product?.name} (${v.sku}: ${v.stock}/${v.lowStockThreshold})`,
+                    `${v.product?.name} (${v.sku}: ${v.stock}/${v.lowStockThreshold})`
                 )
                 .join(" · ")}
+              {lowStock.length > 5 && ` and ${lowStock.length - 5} more.`}
             </p>
           </div>
         </div>
@@ -324,7 +364,7 @@ export default function InventoryPage() {
           onClick={() => setActiveTab("stock")}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${activeTab === "stock" ? "bg-surface shadow text-text-main" : "text-text-muted hover:text-text-main"}`}
         >
-          Low Stock Items
+          Stock Levels
         </button>
         <button
           onClick={() => setActiveTab("log")}
@@ -334,119 +374,201 @@ export default function InventoryPage() {
         </button>
       </div>
 
-      {/* Low Stock Tab */}
+      {/* Stock Levels Tab */}
       {activeTab === "stock" && (
-        <div className="bg-surface rounded-xl border border-border-main shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="bg-background border-b border-border-main text-text-muted uppercase text-[10px] font-bold tracking-widest">
-                <th className="px-6 py-4">Product / SKU</th>
-                <th className="px-6 py-4">Price</th>
-                <th className="px-6 py-4">Current Stock</th>
-                <th className="px-6 py-4">Threshold</th>
-                <th className="px-6 py-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {lowStock.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 opacity-40">
-                      <Package className="h-12 w-12 text-text-muted" />
-                      <p className="font-medium text-zinc-600">
-                        All products are sufficiently stocked!
-                      </p>
-                    </div>
-                  </td>
+        <div className="space-y-4 animate-fade-in">
+          {/* Controls */}
+          <div className="bg-surface p-4 rounded-xl border border-border-main shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+              <input
+                type="text"
+                placeholder="Search by product name or SKU..."
+                value={stockSearch}
+                onChange={(e) => setStockSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+              />
+            </div>
+            <div className="flex items-center space-x-3">
+              <label className="flex items-center space-x-2 text-sm font-medium text-text-secondary cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showLowStockOnly}
+                  onChange={(e) => setShowLowStockOnly(e.target.checked)}
+                  className="rounded border-border-main text-red-500 focus:ring-red-500 h-4 w-4"
+                />
+                <span className="flex items-center gap-1.5 text-red-600 font-bold">
+                  <AlertTriangle className="h-4 w-4" />
+                  Show Low Stock Only
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Variants Table */}
+          <div className="bg-surface rounded-xl border border-border-main shadow-sm overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="bg-background border-b border-border-main text-text-muted uppercase text-[10px] font-bold tracking-widest">
+                  <th className="px-6 py-4">Product / SKU</th>
+                  <th className="px-6 py-4">Price</th>
+                  <th className="px-6 py-4">Current Stock</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Threshold</th>
+                  <th className="px-6 py-4 w-44 text-right">Actions</th>
                 </tr>
-              ) : (
-                lowStock.map((variant) => {
-                  const pct = Math.min(
-                    (variant.stock / variant.lowStockThreshold) * 100,
-                    100,
-                  );
-                  return (
-                    <tr
-                      key={variant.id}
-                      className="hover:bg-zinc-50 transition-colors"
-                    >
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-text-main">
-                          {variant.product?.name}
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {filteredVariants.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center gap-3 opacity-40">
+                        <Package className="h-12 w-12 text-text-muted" />
+                        <p className="font-medium text-zinc-600">
+                          {stockSearch
+                            ? "No products match your criteria."
+                            : "All products are sufficiently stocked!"}
                         </p>
-                        <p className="text-xs text-text-muted font-mono">
-                          {variant.sku}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-text-main">
-                        ৳{Number(variant.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`text-sm font-black ${variant.stock === 0 ? "text-red-600" : "text-amber-600"}`}
-                          >
-                            {variant.stock}
-                          </span>
-                          <div className="w-20 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${variant.stock === 0 ? "bg-red-500" : "bg-amber-500"}`}
-                              style={{ width: `${pct}%` }}
-                            />
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredVariants.map((variant) => {
+                    const isLow = variant.stock <= variant.lowStockThreshold;
+                    const pct = Math.max(
+                      0,
+                      Math.min(
+                        (variant.stock / Math.max(1, variant.lowStockThreshold)) * 100,
+                        100
+                      )
+                    );
+                    
+                    let progressColor = "bg-emerald-500";
+                    let textStockColor = "text-emerald-600";
+                    if (variant.stock === 0) {
+                      progressColor = "bg-red-500";
+                      textStockColor = "text-red-600";
+                    } else if (isLow) {
+                      progressColor = "bg-amber-500";
+                      textStockColor = "text-amber-600";
+                    }
+
+                    return (
+                      <tr
+                        key={variant.id}
+                        className={`hover:bg-zinc-50/50 transition-colors ${isLow ? "bg-red-50/10" : ""}`}
+                      >
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-text-main">
+                            {variant.product?.name}
+                          </p>
+                          <p className="text-xs text-text-muted font-mono mt-0.5">
+                            {variant.sku}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-text-main">
+                          ৳{Number(variant.price).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className={`text-sm font-black w-8 ${textStockColor}`}>
+                              {variant.stock}
+                            </span>
+                            <div className="w-24 h-1.5 bg-zinc-100 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-text-muted text-sm">
-                        {variant.lowStockThreshold}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setAdjustTarget(variant);
-                              setAdjustType("IN");
-                              setAdjustQty("1");
-                              setAdjustNotes("");
-                            }}
-                            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer"
-                          >
-                            Adjust Stock
-                          </button>
-                          <button
-                            onClick={() => {
-                              setThresholdTarget(variant);
-                              setNewThreshold(
-                                String(variant.lowStockThreshold),
-                              );
-                            }}
-                            className="px-3 py-1.5 bg-surface border border-border-main text-xs font-medium rounded-lg hover:bg-zinc-50 transition-colors cursor-pointer"
-                          >
-                            Set Alert
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        </td>
+                        <td className="px-6 py-4">
+                          {variant.stock === 0 ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                              Out of Stock
+                            </span>
+                          ) : isLow ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 animate-pulse">
+                              Low Stock
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                              In Stock
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-text-muted text-sm font-medium">
+                          {variant.lowStockThreshold}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setAdjustTarget(variant);
+                                setAdjustType("IN");
+                                setAdjustQty("1");
+                                setAdjustNotes("");
+                              }}
+                              className="px-3 py-1.5 bg-zinc-900 text-white text-xs font-bold rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                            >
+                              Adjust Stock
+                            </button>
+                            <button
+                              onClick={() => {
+                                setThresholdTarget(variant);
+                                setNewThreshold(
+                                  String(variant.lowStockThreshold)
+                                );
+                              }}
+                              className="px-3 py-1.5 bg-surface border border-border-main text-xs font-medium rounded-lg hover:bg-zinc-50 transition-colors cursor-pointer text-text-main"
+                            >
+                              Set Alert
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Movement Log Tab */}
       {activeTab === "log" && (
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search movements by product, SKU, type, or notes..."
-              className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border-main rounded-xl text-sm focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
-            />
+        <div className="space-y-4 animate-fade-in">
+          {/* Controls */}
+          <div className="bg-surface p-4 rounded-xl border border-border-main shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative flex-grow max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+              <input
+                type="text"
+                value={logSearch}
+                onChange={(e) => setLogSearch(e.target.value)}
+                placeholder="Search movements by product, SKU, or notes..."
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-zinc-900 outline-none transition-all"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-text-muted" />
+              <select
+                value={logTypeFilter}
+                onChange={(e) => setLogTypeFilter(e.target.value)}
+                className="bg-background border border-border-main rounded-lg text-sm py-2 px-3 focus:ring-2 focus:ring-zinc-900 outline-none text-text-main font-semibold"
+              >
+                <option value="ALL">All Movement Types</option>
+                {MOVEMENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t === "IN" ? "Stock In" : t === "OUT" ? "Stock Out" : t.charAt(0) + t.slice(1).toLowerCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+
           <div className="bg-surface rounded-xl border border-border-main shadow-sm overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead>
@@ -466,8 +588,8 @@ export default function InventoryPage() {
                       <div className="flex flex-col items-center gap-3 opacity-40">
                         <History className="h-12 w-12 text-text-muted" />
                         <p className="font-medium text-zinc-600">
-                          {search
-                            ? "No movements match your search."
+                          {logSearch || logTypeFilter !== "ALL"
+                            ? "No movements match your filters."
                             : "No movements recorded yet."}
                         </p>
                       </div>
@@ -486,24 +608,24 @@ export default function InventoryPage() {
                         day: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                      },
+                      }
                     );
                     return (
                       <tr
                         key={m.id}
-                        className="hover:bg-zinc-50 transition-colors"
+                        className="hover:bg-zinc-50/50 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <p className="font-medium text-text-main">
                             {m.variant?.product?.name ?? "—"}
                           </p>
-                          <p className="text-xs text-text-muted font-mono">
+                          <p className="text-xs text-text-muted font-mono mt-0.5">
                             {m.variant?.sku}
                           </p>
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${meta.color}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${meta.color}`}
                           >
                             {meta.icon}
                             {meta.label}
@@ -520,7 +642,7 @@ export default function InventoryPage() {
                         <td className="px-6 py-4 text-xs text-text-muted max-w-xs truncate">
                           {m.notes ?? "—"}
                         </td>
-                        <td className="px-6 py-4 text-xs text-text-muted">
+                        <td className="px-6 py-4 text-xs text-text-muted font-semibold">
                           {userName || m.user?.email || "System"}
                         </td>
                         <td className="px-6 py-4 text-xs text-text-muted">
@@ -538,26 +660,26 @@ export default function InventoryPage() {
 
       {/* Adjust Stock Modal */}
       {adjustTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-2xl border border-border-main shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-surface rounded-2xl border border-border-main shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
             <div className="px-6 py-4 border-b border-border-main bg-background flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-text-main">Adjust Stock</h3>
                 <p className="text-xs text-text-muted mt-0.5">
                   {adjustTarget.product?.name} — {adjustTarget.sku} (Current:{" "}
-                  {adjustTarget.stock})
+                  <span className="font-black text-zinc-900">{adjustTarget.stock}</span>)
                 </p>
               </div>
               <button
                 onClick={() => setAdjustTarget(null)}
-                className="p-2 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer text-text-muted hover:text-zinc-600"
               >
-                <X className="h-5 w-5 text-text-muted" />
+                <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleAdjust} className="p-6 space-y-4">
               {adjustError && (
-                <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-lg">
+                <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-lg font-bold">
                   {adjustError}
                 </div>
               )}
@@ -573,10 +695,10 @@ export default function InventoryPage() {
                         key={t}
                         type="button"
                         onClick={() => setAdjustType(t)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${adjustType === t ? `${meta.color} border-current` : "border-border-main text-text-muted hover:bg-zinc-50"}`}
+                        className={`flex items-center gap-1.5 px-2 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer justify-center ${adjustType === t ? `${meta.color} border-current ring-1 ring-current` : "border-border-main text-text-muted hover:bg-zinc-50"}`}
                       >
                         {meta.icon}
-                        {t}
+                        {t === "IN" ? "In" : t === "OUT" ? "Out" : t.charAt(0) + t.slice(1).toLowerCase()}
                       </button>
                     );
                   })}
@@ -621,7 +743,7 @@ export default function InventoryPage() {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-hover transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {adjusting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Apply Adjustment
+                  Apply
                 </button>
               </div>
             </form>
@@ -631,21 +753,21 @@ export default function InventoryPage() {
 
       {/* Threshold Modal */}
       {thresholdTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-2xl border border-border-main shadow-2xl w-full max-w-sm overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-surface rounded-2xl border border-border-main shadow-2xl w-full max-w-sm overflow-hidden animate-slide-up">
             <div className="px-6 py-4 border-b border-border-main bg-background flex items-center justify-between">
               <h3 className="font-bold text-text-main">
                 Update Alert Threshold
               </h3>
               <button
                 onClick={() => setThresholdTarget(null)}
-                className="p-2 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer text-text-muted hover:text-zinc-600"
               >
-                <X className="h-5 w-5 text-text-muted" />
+                <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleThreshold} className="p-6 space-y-4">
-              <p className="text-sm text-text-muted">
+              <p className="text-sm text-text-muted leading-relaxed">
                 Set the minimum stock level for{" "}
                 <span className="font-bold text-text-main">
                   {thresholdTarget.product?.name} ({thresholdTarget.sku})

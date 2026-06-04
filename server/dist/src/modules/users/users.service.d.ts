@@ -27,16 +27,16 @@ export declare class UsersService implements OnModuleInit {
     } | null>;
     findByEmail(email: string): Promise<({
         profile: {
-            id: string;
-            userId: string;
             firstName: string | null;
             lastName: string | null;
             phone: string | null;
+            id: string;
+            userId: string;
             avatarUrl: string | null;
         } | null;
     } & {
-        id: string;
         email: string;
+        id: string;
         passwordHash: string;
         role: import("generated/prisma/index.js").$Enums.Role;
         isActive: boolean;

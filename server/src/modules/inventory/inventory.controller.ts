@@ -38,10 +38,16 @@ export class InventoryController {
     return this.inventoryService.getMovementsByVariant(variantId);
   }
 
+  @Get('variants')
+  findAllVariants() {
+    return this.inventoryService.getAllVariants();
+  }
+
   @Get('low-stock')
   findLowStock() {
     return this.inventoryService.getLowStockAlerts();
   }
+
 
   @Patch('threshold/:variantId')
   updateThreshold(

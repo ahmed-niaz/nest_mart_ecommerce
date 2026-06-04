@@ -13,7 +13,8 @@ import { useQuery } from "@tanstack/react-query";
 
 interface Category {
   id: string;
-  title: string;
+  name?: string;
+  title?: string;
   slug: string;
   categoriesImage?: string;
   productCount: number;
@@ -27,7 +28,29 @@ export default function Categories() {
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
       const res = await fetch(`${baseUrl}/categories`);
       const data = await res.json();
-      return data.success ? data.data : [];
+      if (data.success && data.data) {
+        const nameMap = new Map<string, Category>();
+        data.data.forEach((cat: Category) => {
+          const name = (cat.name || cat.title || "").trim();
+          const lowerName = name.toLowerCase();
+          const slug = (cat.slug || "").toLowerCase();
+
+          if (
+            lowerName.includes("honey & functional foods") ||
+            lowerName.includes("duplicate") ||
+            slug.includes("honey-functional-foods")
+          ) {
+            return;
+          }
+
+          const existing = nameMap.get(lowerName);
+          if (!existing || (cat.productCount || 0) > (existing.productCount || 0)) {
+            nameMap.set(lowerName, cat);
+          }
+        });
+        return Array.from(nameMap.values());
+      }
+      return [];
     },
   });
 
@@ -121,12 +144,12 @@ export default function Categories() {
                         <div className="w-24 h-24 mx-auto mb-4 bg-primary-light/50 rounded-full flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover/card:scale-105">
                           <img
                             src={imageSrc}
-                            alt={category.title}
+                            alt={category.name || category.title || ""}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <h3 className="font-semibold text-text-main group-hover/card:text-primary transition-colors truncate">
-                          {category.title}
+                          {category.name || category.title}
                         </h3>
                       </div>
                     </Link>

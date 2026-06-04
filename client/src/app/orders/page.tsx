@@ -325,6 +325,26 @@ export default function OrdersPage() {
     );
   }
 
+  if (user.role !== "CUSTOMER") {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+        <ShoppingBag className="h-16 w-16 text-gray-200 mb-4" />
+        <h2 className="text-2xl font-black text-gray-900 mb-2">
+          Access Denied
+        </h2>
+        <p className="text-gray-500 mb-6">
+          Only customers have access to view personal order histories. As an administrator, you can manage all store orders from the dashboard.
+        </p>
+        <Link
+          href="/dashboard/orders"
+          className="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors cursor-pointer"
+        >
+          Go to Orders Dashboard
+        </Link>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">

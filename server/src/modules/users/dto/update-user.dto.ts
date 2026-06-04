@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString, Matches, ValidateIf } from 'class-validator';
 
 export class UpdateUserDto {
   @IsString()
@@ -11,7 +11,8 @@ export class UpdateUserDto {
 
   @IsString()
   @IsOptional()
-  @Matches(/^\+?[1-9]\d{1,14}$/, {
+  @ValidateIf((o) => o.phone && o.phone !== '')
+  @Matches(/^\+?[0-9]\d{1,14}$/, {
     message: 'Please provide a valid phone number',
   })
   phone?: string;

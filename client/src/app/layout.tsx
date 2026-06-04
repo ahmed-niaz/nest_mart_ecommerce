@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -58,6 +58,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${inter.className} min-h-screen bg-background antialiased`}
+        suppressHydrationWarning
       >
         <Providers>
           <AuthProvider>

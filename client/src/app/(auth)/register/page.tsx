@@ -126,7 +126,7 @@ export default function RegisterPage() {
                   className={
                     errors.firstName
                       ? "border-red-500 focus:ring-red-500"
-                      : "focus:ring-orange-500"
+                      : "focus:ring-primary focus:border-primary"
                   }
                 />
                 {errors.firstName && (
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                   className={
                     errors.lastName
                       ? "border-red-500 focus:ring-red-500"
-                      : "focus:ring-orange-500"
+                      : "focus:ring-primary focus:border-primary"
                   }
                 />
                 {errors.lastName && (
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                 className={
                   errors.email
                     ? "border-red-500 focus:ring-red-500"
-                    : "focus:ring-orange-500"
+                    : "focus:ring-primary focus:border-primary"
                 }
               />
               {errors.email && (
@@ -190,7 +190,7 @@ export default function RegisterPage() {
                   className={
                     errors.password
                       ? "border-red-500 pr-10 focus:ring-red-500"
-                      : "pr-10 focus:ring-orange-500"
+                      : "pr-10 focus:ring-primary focus:border-primary"
                   }
                 />
                 <button
@@ -220,7 +220,7 @@ export default function RegisterPage() {
                 className={
                   errors.confirmPassword
                     ? "border-red-500 focus:ring-red-500"
-                    : "focus:ring-orange-500"
+                    : "focus:ring-primary focus:border-primary"
                 }
               />
               {errors.confirmPassword && (
@@ -232,7 +232,7 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:ring-offset-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

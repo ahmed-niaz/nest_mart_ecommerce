@@ -31,11 +31,19 @@ export default function ProductsPage() {
 function ProductsContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
+  const urlSearch = searchParams.get("search") || searchParams.get("q") || "";
 
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState("newest");
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch);
+
+  // Sync search input with URL search parameters when they change
+  useEffect(() => {
+    const q = searchParams.get("search") || searchParams.get("q") || "";
+    setSearchInput(q);
+    setDebouncedSearch(q);
+  }, [searchParams]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -44,7 +52,10 @@ function ProductsContent() {
 
   // Debounce search
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(searchInput), 500);
+    const handler = setTimeout(() => {
+      // Only set debouncedSearch if searchInput has changed from debouncedSearch
+      setDebouncedSearch(searchInput);
+    }, 500);
     return () => clearTimeout(handler);
   }, [searchInput]);
 

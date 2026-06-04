@@ -129,7 +129,7 @@ export default function LoginPage() {
                 className={
                   errors.email
                     ? "border-red-500 focus:ring-red-500"
-                    : "focus:ring-orange-500"
+                    : "focus:ring-primary focus:border-primary"
                 }
               />
               {errors.email && (
@@ -150,7 +150,7 @@ export default function LoginPage() {
                   className={
                     errors.password
                       ? "border-red-500 pr-10 focus:ring-red-500"
-                      : "pr-10 focus:ring-orange-500"
+                      : "pr-10 focus:ring-primary focus:border-primary"
                   }
                 />
                 <button
@@ -179,7 +179,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              className="w-full bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:ring-offset-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

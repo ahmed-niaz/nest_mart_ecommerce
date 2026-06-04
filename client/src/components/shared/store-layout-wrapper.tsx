@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Navbar from "./navbar";
@@ -21,7 +21,9 @@ export default function StoreLayoutWrapper({
 
   return (
     <>
-      <Navbar />
+      <Suspense fallback={<div className="h-16 bg-white border-b border-border-main animate-pulse" />}>
+        <Navbar />
+      </Suspense>
       <main className="min-h-[calc(100vh-200px)]">{children}</main>
       <Footer />
     </>

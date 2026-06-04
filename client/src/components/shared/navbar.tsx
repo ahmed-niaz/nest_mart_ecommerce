@@ -5,6 +5,7 @@ import { Search, ShoppingCart, Menu, X, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useCart } from "@/lib/cart-context";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Category {
   id: string;
@@ -20,6 +21,24 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const q = searchParams.get("search") || searchParams.get("q") || "";
+    setSearchQuery(q);
+  }, [searchParams]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push("/products");
+    }
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -28,7 +47,26 @@ export default function Navbar() {
         const res = await fetch(`${baseUrl}/categories`);
         const data = await res.json();
         if (data.success && data.data) {
-          setCategories(data.data);
+          const nameMap = new Map<string, Category & { productCount?: number }>();
+          data.data.forEach((cat: any) => {
+            const name = (cat.name || cat.title || "").trim();
+            const lowerName = name.toLowerCase();
+            const slug = (cat.slug || "").toLowerCase();
+
+            if (
+              lowerName.includes("honey & functional foods") ||
+              lowerName.includes("duplicate") ||
+              slug.includes("honey-functional-foods")
+            ) {
+              return;
+            }
+
+            const existing = nameMap.get(lowerName);
+            if (!existing || (cat.productCount || 0) > (existing.productCount || 0)) {
+              nameMap.set(lowerName, cat);
+            }
+          });
+          setCategories(Array.from(nameMap.values()));
         }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -68,16 +106,18 @@ export default function Navbar() {
           </nav>
 
           {/* Search — Desktop */}
-          <div className="flex-1 max-w-sm mx-6 hidden lg:block">
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-sm mx-6 hidden lg:block">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
               <input
                 type="search"
                 placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-9 pl-9 pr-4 bg-surface-secondary border border-border-light rounded-lg text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all"
               />
             </div>
-          </div>
+          </form>
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 shrink-0">
@@ -131,13 +171,15 @@ export default function Navbar() {
                         >
                           My Profile
                         </Link>
-                        <Link
-                          href="/orders"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="block px-3 py-2 text-sm text-text-secondary hover:text-text-main hover:bg-surface-secondary rounded-lg transition-colors"
-                        >
-                          My Orders
-                        </Link>
+                        {user.role === "CUSTOMER" && (
+                          <Link
+                            href="/orders"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="block px-3 py-2 text-sm text-text-secondary hover:text-text-main hover:bg-surface-secondary rounded-lg transition-colors"
+                          >
+                            My Orders
+                          </Link>
+                        )}
                         {["ADMIN", "SUPER_ADMIN", "STAFF"].includes(
                           user.role.toUpperCase(),
                         ) && (
@@ -194,14 +236,16 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border-light animate-slide-down">
-            <div className="mb-4 relative">
+            <form onSubmit={handleSearchSubmit} className="mb-4 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
               <input
                 type="search"
                 placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-10 pl-9 pr-4 bg-surface-secondary border border-border-light rounded-lg text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
-            </div>
+            </form>
             <nav className="flex flex-col gap-1">
               <Link
                 href="/"

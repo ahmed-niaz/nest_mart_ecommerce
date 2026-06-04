@@ -137,4 +137,18 @@ export class InventoryService {
       include: { product: true },
     });
   }
+
+  async getAllVariants() {
+    return this.prisma.productVariant.findMany({
+      include: {
+        product: true,
+      },
+      orderBy: {
+        product: {
+          name: 'asc',
+        },
+      },
+    });
+  }
 }
+
